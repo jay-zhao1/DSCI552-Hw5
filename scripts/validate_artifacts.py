@@ -50,6 +50,41 @@ for p in root.glob('results/search_audit_*.json'):
 for name in ['rules_full','rules_pruned']:
  rules=json.loads((root/'results'/f'{name}.json').read_text())
  assert all('bladder inflammation' in r['text'] and 'renal pelvis nephritis' in r['text'] for r in rules)
+# Independently evaluate every reduced-candidate rule against the raw acute
+# data. This checks the new 1(d) results without fitting regression models.
+details=json.loads((root/'results/reduced_candidate_details.json').read_text())
+reduced_rules=json.loads((root/'results/rules_reduced_candidate.json').read_text())
+acute_path=root/'Homework 5 Data/diagnosis.data'
+acute_encoding='utf-16' if acute_path.read_bytes().startswith((b'\xff\xfe',b'\xfe\xff')) else 'utf-8-sig'
+acute=pd.read_csv(acute_path,sep='\t',header=None,encoding=acute_encoding,dtype=str)
+acute_x=np.column_stack([acute[0].str.replace(',','.',regex=False).astype(float)]+[acute[j].map({'no':0,'yes':1}) for j in range(1,6)])
+acute_y=2*acute[6].map({'no':0,'yes':1}).to_numpy()+acute[7].map({'no':0,'yes':1}).to_numpy()
+coverage=np.zeros(len(acute),dtype=int); rule_predictions=np.full(len(acute),-1,dtype=int)
+for rule in reduced_rules:
+ mask=np.ones(len(acute),dtype=bool)
+ for feature,cut,left in rule['conditions']:
+  mask &= (acute_x[:,feature]<=cut) if left else (acute_x[:,feature]>cut)
+ coverage+=mask; rule_predictions[mask]=rule['class']
+ support=int(re.search(r'\(n=(\d+)\)',rule['text']).group(1))
+ assert int(mask.sum())==support
+assert np.all(coverage==1)
+assert len(reduced_rules)==details['candidate_leaves']
+assert max(len(r['conditions']) for r in reduced_rules)==details['candidate_depth']
+assert np.isclose(np.mean(rule_predictions==acute_y),details['candidate_training_accuracy'])
+assert np.count_nonzero(rule_predictions!=acute_y)==details['training_errors']
+assert np.count_nonzero(rule_predictions//2!=acute_y//2)==details['bladder_label_errors']
+assert np.count_nonzero(rule_predictions%2!=acute_y%2)==details['renal_label_errors']
+path_table=pd.read_csv(root/'results/pruning_path.csv')
+first_reduction=path_table.loc[(path_table.Leaves>1)&(path_table.Leaves<path_table.iloc[0].Leaves)].iloc[0]
+assert np.isclose(first_reduction['alpha breakpoint'],details['candidate_alpha'])
+assert first_reduction.Leaves==details['candidate_leaves']
+assert first_reduction.Depth==details['candidate_depth']
+old_comparison=pd.read_csv(root/'results/tree_comparison.csv')
+original_selection=old_comparison.loc[old_comparison.Tree=='Selected'].iloc[0]
+assert np.isclose(original_selection.alpha,details['original_one_se_alpha'])
+assert original_selection.Leaves==details['original_one_se_leaves']
+assert details['candidate_leaves']<original_selection.Leaves
+
 cv=pd.read_csv(root/'results/coefficient_of_variation.csv')
 assert len(cv)==122 and np.allclose(cv['Sample SD (ddof=1)']/cv.Mean,cv.CV)
 assert len(pd.read_csv(root/'results/top11_cv.csv'))==11
@@ -86,6 +121,6 @@ with pdfplumber.open(pdf) as p:
   assert not bad, f'Out-of-page text on page {i}'
   bounds.append({'page':i,'width_points':float(page.width),'height_points':float(page.height),'chars':len(page.chars)})
 (root/'results/pdf_page_audit.json').write_text(json.dumps(bounds,indent=2))
-result={'notebook_code_cells':len(code),'sequential_execution':True,'notebook_errors':0,'models':len(metrics),'metric_recomputations_passed':True,'data_hashes_passed':True,'original_zip_files_checked':archive_checks,'all_question_headings_in_pdf':True,'pdf_pages':len(reader.pages),'pdf_text_bounds_passed':True,'no_replacement_or_black_square_glyphs':True,'lasso_support_checks_passed':True,'search_boundaries_and_warning_checks_passed':True}
+result={'notebook_code_cells':len(code),'sequential_execution':True,'notebook_errors':0,'models':len(metrics),'metric_recomputations_passed':True,'data_hashes_passed':True,'original_zip_files_checked':archive_checks,'all_question_headings_in_pdf':True,'pdf_pages':len(reader.pages),'pdf_text_bounds_passed':True,'no_replacement_or_black_square_glyphs':True,'lasso_support_checks_passed':True,'search_boundaries_and_warning_checks_passed':True,'question_1d_reduced_candidate_rule_and_metric_checks_passed':True}
 (root/'results/final_validation.json').write_text(json.dumps(result,indent=2))
 print(json.dumps(result,indent=2))

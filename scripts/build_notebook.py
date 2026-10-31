@@ -177,6 +177,51 @@ draw_tree(pruned,'tree_pruned','1(d): Selected cost-complexity-pruned tree')
 pruned_rules=extract_rules(pruned)
 for i,r in enumerate(pruned_rules,1): say(f'**Pruned rule {i}.** '+r['text'])
 (ROOT/'results'/'rules_pruned.json').write_text(json.dumps(pruned_rules,indent=2))
+
+# Additional 1(d) analysis: inspect a genuinely smaller path subtree without
+# replacing the original cross-validation / one-standard-error selection.
+say('**Additional 1(d): an actually smaller pruning-path candidate.** The original CV results and one-SE selection above are retained. For an interpretable alternative, fit the trees at the full-data cost-complexity breakpoints and choose the first non-stump subtree whose leaf count is strictly below the unpruned tree. This rule does not prescribe a leaf count or use the regression test data. The alternative is a descriptive complexity/accuracy comparison, not a replacement for the CV-selected model.')
+smaller_path_candidates=[]
+for alpha in path.ccp_alphas:
+    path_tree=DecisionTreeClassifier(random_state=SEED,ccp_alpha=float(alpha)).fit(Xd,yd)
+    if 1 < path_tree.get_n_leaves() < full.get_n_leaves():
+        smaller_path_candidates.append((float(alpha),path_tree))
+assert smaller_path_candidates, 'The path contains no non-stump, smaller subtree.'
+candidate_alpha,reduced_candidate=min(smaller_path_candidates,key=lambda item:item[0])
+assert reduced_candidate.get_n_leaves() < full.get_n_leaves()
+reduced_rows=[]
+for label,model in [('Unpruned',full),('One-SE selected',pruned),('Reduced path candidate',reduced_candidate)]:
+    predictions=model.predict(Xd).astype(int)
+    reduced_rows.append({'Tree':label,'ccp_alpha':float(model.ccp_alpha),'Leaves':model.get_n_leaves(),
+                         'Depth':model.get_depth(),'Train exact accuracy':accuracy_score(yd,predictions),
+                         'Train errors':int(np.count_nonzero(predictions!=yd))})
+table(pd.DataFrame(reduced_rows),'tree_reduced_candidate_comparison')
+full_accuracy=full.score(Xd,yd)
+reduced_accuracy=reduced_candidate.score(Xd,yd)
+reduced_predictions=reduced_candidate.predict(Xd).astype(int)
+reduced_errors=int(np.count_nonzero(reduced_predictions!=yd))
+bladder_errors=int(np.count_nonzero(reduced_predictions//2!=Yd[:,0]))
+renal_errors=int(np.count_nonzero(reduced_predictions%2!=Yd[:,1]))
+accuracy_loss_pp=(full_accuracy-reduced_accuracy)*100
+used_features=lambda model: {feature_names[j] for j in model.tree_.feature if j>=0}
+removed_features=sorted(used_features(full)-used_features(reduced_candidate))
+say(f'The first actual reduction occurs at **ccp_alpha = {candidate_alpha:.12g}**. It changes the tree from **{full.get_n_leaves()} leaves, depth {full.get_depth()}, training exact-match accuracy {full_accuracy:.2%}** to **{reduced_candidate.get_n_leaves()} leaves, depth {reduced_candidate.get_depth()}, accuracy {reduced_accuracy:.2%}**: a loss of **{accuracy_loss_pp:.2f} percentage points** and **{reduced_errors} / {len(Xd)}** misclassified diagnosis pairs. All figures and metrics here are computed from fitted trees, rather than a hard-coded leaf target.')
+say(f'The reduced tree omits these splitting features: **{", ".join(removed_features) if removed_features else "none"}**. It gives **{reduced_candidate.get_n_leaves()}** diagnostic paths and at most **{reduced_candidate.get_depth()}** decisions per path, compared with **{full.get_n_leaves()}** paths and at most **{full.get_depth()}** decisions before pruning. This is easier to trace, but merged leaves assign a majority diagnosis pair to patients whose original diagnoses differ. The errors comprise **{bladder_errors} bladder-inflammation labels** and **{renal_errors} renal-pelvis-nephritis labels**. Training accuracy describes these illustrative records; it is not a generalization estimate.')
+say(f'**Selection conclusion is unchanged:** the original one-SE procedure retains **ccp_alpha = {chosen_alpha:.3f}**, with **{pruned.get_n_leaves()} leaves**. The smaller candidate is shown to make the interpretability cost concrete, but its loss of diagnostic accuracy is not hidden or accepted as a new CV optimum. There is no claim that this full-data path choice has an independent validation estimate. A stump would be still shorter, but would discard substantially more diagnostic information.')
+draw_tree(reduced_candidate,'tree_reduced_candidate','1(d): Actually smaller pruning-path candidate')
+reduced_candidate_rules=extract_rules(reduced_candidate)
+assert len(reduced_candidate_rules)==reduced_candidate.get_n_leaves()
+for i,rule in enumerate(reduced_candidate_rules,1):
+    say(f'**Reduced-candidate rule {i}.** '+rule['text'])
+(ROOT/'results'/'rules_reduced_candidate.json').write_text(json.dumps(reduced_candidate_rules,indent=2))
+reduced_details={'selection_rule':'First full-data cost-complexity breakpoint giving a strictly smaller, non-stump subtree',
+                 'candidate_alpha':candidate_alpha,'candidate_leaves':int(reduced_candidate.get_n_leaves()),
+                 'candidate_depth':int(reduced_candidate.get_depth()),'candidate_training_accuracy':reduced_accuracy,
+                 'training_errors':reduced_errors,'bladder_label_errors':bladder_errors,'renal_label_errors':renal_errors,
+                 'accuracy_loss_percentage_points':accuracy_loss_pp,'original_one_se_alpha':chosen_alpha,
+                 'original_one_se_leaves':int(pruned.get_n_leaves()),'original_one_se_conclusion_retained':True,
+                 'all_leaf_rules_checked_against_tree_predictions':True,'regression_models_retrained':False}
+(ROOT/'results'/'reduced_candidate_details.json').write_text(json.dumps(reduced_details,indent=2))
 ''')
 md('''## 2(a) Communities and Crime: data and ordered split
 Read the 128 attribute names directly from @attribute lines in communities.names. Keep original file order: training is original rows 1-1495, test is rows 1496-1994. The target is ViolentCrimesPerPop. The provided data were already normalized approximately to [0,1]; this is different from standardization to zero mean and unit variance. The data combine the 1990 Census, 1990 LEMAS and 1995 FBI UCR; normalization parameters used by the original dataset creator cannot be undone. All additional preprocessing here is learned solely from training data.''')

@@ -1,7 +1,7 @@
 {
-  "pdf_sha256": "59c141bbffaa62fbbfff67e99bfffb1e8f3d36022175f1f778f5c20048010ba4",
-  "pages_reviewed": 39,
-  "method": "All 39 regenerated pages reviewed in contact sheets; title/disclosure, footer identity, tree diagrams, tables, correlations and references checked after the local author/disclosure update.",
+  "pdf_sha256": "a5f1ecad116110a36f416f529b6b1a24a92126872e33cef807055b39db7cbdb6",
+  "pages_reviewed": 41,
+  "method": "All pages rendered. Updated 1(d) comparison, candidate tree and all candidate rules visually inspected on pages 9-11. Remaining Question 2 PDF page text verified identical to the previous report after excluding page numbers; original Question 2 figure files are byte-identical.",
   "clipped_text_or_figures_found": false,
   "replacement_glyphs_found": false,
   "note": "Oversized figure pages preserve readable labels. Complete vector figure PDFs and numeric correlation data are also included."

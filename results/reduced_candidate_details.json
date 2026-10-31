@@ -1,0 +1,16 @@
+{
+  "selection_rule": "First full-data cost-complexity breakpoint giving a strictly smaller, non-stump subtree",
+  "candidate_alpha": 0.09816666666666667,
+  "candidate_leaves": 4,
+  "candidate_depth": 2,
+  "candidate_training_accuracy": 0.8416666666666667,
+  "training_errors": 19,
+  "bladder_label_errors": 19,
+  "renal_label_errors": 0,
+  "accuracy_loss_percentage_points": 15.833333333333332,
+  "original_one_se_alpha": 0.089,
+  "original_one_se_leaves": 6,
+  "original_one_se_conclusion_retained": true,
+  "all_leaf_rules_checked_against_tree_predictions": true,
+  "regression_models_retrained": false
+}

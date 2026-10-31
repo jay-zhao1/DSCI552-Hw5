@@ -1,0 +1,4 @@
+Tree,ccp_alpha,Leaves,Depth,Train exact accuracy,Train errors
+Unpruned,0.0,6,4,1.0,0
+One-SE selected,0.089,6,4,1.0,0
+Reduced path candidate,0.09816666666666667,4,2,0.8416666666666667,19

@@ -306,6 +306,81 @@
   },
   {
     "kind": "text",
+    "text": "**Additional 1(d): an actually smaller pruning-path candidate.** The original CV results and one-SE selection above are retained. For an interpretable alternative, fit the trees at the full-data cost-complexity breakpoints and choose the first non-stump subtree whose leaf count is strictly below the unpruned tree. This rule does not prescribe a leaf count or use the regression test data. The alternative is a descriptive complexity/accuracy comparison, not a replacement for the CV-selected model."
+  },
+  {
+    "kind": "table",
+    "name": "tree_reduced_candidate_comparison",
+    "columns": [
+      "Tree",
+      "ccp_alpha",
+      "Leaves",
+      "Depth",
+      "Train exact accuracy",
+      "Train errors"
+    ],
+    "rows": [
+      [
+        "Unpruned",
+        "0.0",
+        "6",
+        "4",
+        "1.0",
+        "0"
+      ],
+      [
+        "One-SE selected",
+        "0.089",
+        "6",
+        "4",
+        "1.0",
+        "0"
+      ],
+      [
+        "Reduced path candidate",
+        "0.09816666666666667",
+        "4",
+        "2",
+        "0.8416666666666667",
+        "19"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "The first actual reduction occurs at **ccp_alpha = 0.0981666666667**. It changes the tree from **6 leaves, depth 4, training exact-match accuracy 100.00%** to **4 leaves, depth 2, accuracy 84.17%**: a loss of **15.83 percentage points** and **19 / 120** misclassified diagnosis pairs. All figures and metrics here are computed from fitted trees, rather than a hard-coded leaf target."
+  },
+  {
+    "kind": "text",
+    "text": "The reduced tree omits these splitting features: **Micturition pains**. It gives **4** diagnostic paths and at most **2** decisions per path, compared with **6** paths and at most **4** decisions before pruning. This is easier to trace, but merged leaves assign a majority diagnosis pair to patients whose original diagnoses differ. The errors comprise **19 bladder-inflammation labels** and **0 renal-pelvis-nephritis labels**. Training accuracy describes these illustrative records; it is not a generalization estimate."
+  },
+  {
+    "kind": "text",
+    "text": "**Selection conclusion is unchanged:** the original one-SE procedure retains **ccp_alpha = 0.089**, with **6 leaves**. The smaller candidate is shown to make the interpretability cost concrete, but its loss of diagnostic accuracy is not hidden or accepted as a new CV optimum. There is no claim that this full-data path choice has an independent validation estimate. A stump would be still shorter, but would discard substantially more diagnostic information."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/tree_reduced_candidate.png",
+    "caption": "1(d): Actually smaller pruning-path candidate All nodes and both diagnosis labels are shown."
+  },
+  {
+    "kind": "text",
+    "text": "**Reduced-candidate rule 1.** IF Lumbar pain = no AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = no (n=10)."
+  },
+  {
+    "kind": "text",
+    "text": "**Reduced-candidate rule 2.** IF Lumbar pain = no AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = no (n=40)."
+  },
+  {
+    "kind": "text",
+    "text": "**Reduced-candidate rule 3.** IF Lumbar pain = yes AND Temperature (C) <= 37.950001 THEN bladder inflammation = no; renal pelvis nephritis = no (n=20)."
+  },
+  {
+    "kind": "text",
+    "text": "**Reduced-candidate rule 4.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 THEN bladder inflammation = no; renal pelvis nephritis = yes (n=50)."
+  },
+  {
+    "kind": "text",
     "text": "## 2(a) Communities and Crime: data and ordered split\nRead the 128 attribute names directly from @attribute lines in communities.names. Keep original file order: training is original rows 1-1495, test is rows 1496-1994. The target is ViolentCrimesPerPop. The provided data were already normalized approximately to [0,1]; this is different from standardization to zero mean and unit variance. The data combine the 1990 Census, 1990 LEMAS and 1995 FBI UCR; normalization parameters used by the original dataset creator cannot be undone. All additional preprocessing here is learned solely from training data."
   },
   {
