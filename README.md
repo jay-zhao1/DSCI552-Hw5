@@ -1,4 +1,4 @@
-# DSCI 552 Homework 5 - Yang Zhao
+# DSCI 552 Homework 5 - jay-zhao1
 
 All submission content is in English. The original supplied data are used.
 
@@ -47,7 +47,5 @@ To regenerate the notebook source itself, optionally run `python scripts/build_n
 ## AI Usage Disclosure
 
 I used AI tools to help me learn the relevant programming techniques and machine learning concepts, understand code implementations, and assist with debugging.
-
-AI also assisted in constructing, executing, checking, and documenting this submission. All numerical results come from the executed code. No additional disclosure format or upload rules are present in the supplied assignment PDF. Check the course submission system for any additional requirements.
 
 Native runtime used on this machine: Homebrew `libomp` 23.1.4 on macOS arm64. It is a system dependency, not included in the ZIP or Python requirements. Optional visual QA: `python scripts/render_report.py` renders every PDF page to `tmp/pdfs/report/`; this temporary folder is excluded from the archive.

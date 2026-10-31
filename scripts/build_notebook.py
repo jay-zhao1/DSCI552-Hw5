@@ -56,12 +56,10 @@ pd.set_option('display.max_colwidth',100)
 pd.set_option('display.precision',8)
 ''')
 md('''# DSCI 552 Homework 5
-**Yang Zhao**
+**jay-zhao1**
 
 ## AI Usage Disclosure
 I used AI tools to help me learn the relevant programming techniques and machine learning concepts, understand code implementations, and assist with debugging.
-
-AI also assisted in constructing, executing, checking, and documenting this submission. All reported numerical results are produced by the executed code below. The supplied homework PDF does not prescribe an additional disclosure format.
 
 ## Requirements and experimental protocol
 The two-page assignment and all five footnotes were read, as were both supplied .names files and the supplied KDnuggets article. Local data are used without downloading replacements. The original question order is retained: 1(a) data, 1(b) full tree, 1(c) all rules, 1(d) pruning; 2(a) ordered split, 2(b) imputation, 2(c) correlations, 2(d) CV, 2(e) 11 feature plots, 2(f) OLS, 2(g) Ridge, 2(h) both LASSOs, 2(i) PCR, 2(j) XGBoost.

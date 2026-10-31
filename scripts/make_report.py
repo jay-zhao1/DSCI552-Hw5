@@ -45,10 +45,10 @@ def foot(canvas,doc):
  w,h=canvas._pagesize
  canvas.saveState(); canvas.setStrokeColor(colors.HexColor('#CED7E0')); canvas.line(36,29,w-36,29)
  canvas.setFont('Helvetica',8); canvas.setFillColor(colors.HexColor('#42526A'))
- canvas.drawString(36,18,'Yang Zhao | DSCI 552 Homework 5'); canvas.drawRightString(w-36,18,f'{doc.page}')
+ canvas.drawString(36,18,'jay-zhao1 | DSCI 552 Homework 5'); canvas.drawRightString(w-36,18,f'{doc.page}')
  canvas.restoreState()
 
-doc=BaseDocTemplate(str(out),pagesize=(612,792),leftMargin=42,rightMargin=42,topMargin=36,bottomMargin=40,title='DSCI 552 Homework 5',author='Yang Zhao')
+doc=BaseDocTemplate(str(out),pagesize=(612,792),leftMargin=42,rightMargin=42,topMargin=36,bottomMargin=40,title='DSCI 552 Homework 5',author='jay-zhao1')
 templates=[]
 def template(name,w,h):
  templates.append(PageTemplate(id=name,pagesize=(w,h),frames=[Frame(36,38,w-72,h-74,id=name,leftPadding=6,rightPadding=6,topPadding=6,bottomPadding=6)],onPage=foot))

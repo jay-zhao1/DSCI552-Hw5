@@ -1,0 +1,41 @@
+{
+  "scope": "Current local coursework files only; old Git commits and external backups intentionally not modified.",
+  "author_identifier": "jay-zhao1",
+  "model_training_performed": false,
+  "notebook_cells_executed_during_cleanup": 0,
+  "notebook_cell_count": 52,
+  "preserved_code_cell_execution_counts": true,
+  "notebook_existing_outputs_unchanged": true,
+  "notebook_metadata_unchanged": true,
+  "computational_code_AST_unchanged": true,
+  "report_tables_unchanged": true,
+  "protected_files_byte_identical": 76,
+  "raw_data_and_experiment_figures_unchanged": true,
+  "reference_authors_preserved": true,
+  "specified_first_disclosure_paragraph_preserved_verbatim": true,
+  "specified_second_disclosure_paragraph_removed": true,
+  "generator_matches_existing_notebook_sources": true,
+  "pdf_pages": 39,
+  "pdf_text_matches_original_except_author_and_requested_paragraph": true,
+  "pdf_author_metadata": "jay-zhao1",
+  "current_deliverable_files_scanned": 85,
+  "PDFs_scanned": 15,
+  "git_metadata_files_unchanged": true,
+  "browser_or_remote_operations_performed": false,
+  "commit_push_or_history_rewrite_performed": false,
+  "modified_existing_files_before_packaging": [
+    "DSCI552_Homework5.ipynb",
+    "DSCI552_Homework5_Report.pdf",
+    "README.md",
+    "results/pdf_page_audit.json",
+    "results/report_content.json",
+    "results/visual_review.json",
+    "scripts/build_notebook.py",
+    "scripts/make_report.py"
+  ],
+  "removed_stale_derived_caches": [
+    "scripts/__pycache__/make_report.cpython-313.pyc",
+    "scripts/__pycache__/build_notebook.cpython-313.pyc"
+  ],
+  "archive_validation": "See submission_manifest.json: package_submission.py validates CRC and SHA-256 of all packaged files."
+}
