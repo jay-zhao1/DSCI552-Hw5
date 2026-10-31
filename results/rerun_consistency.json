@@ -1,0 +1,7 @@
+{
+  "identical_model_configuration": true,
+  "two_complete_numerical_runs_agree": true,
+  "max_absolute_metric_difference": 0.0,
+  "csv_bytes_identical": true,
+  "note": "Repeat execution checked reproducibility. No model or hyperparameter was changed in response to test results; fixes affected bookkeeping and report serialization only."
+}

@@ -1,0 +1,2425 @@
+[
+  {
+    "kind": "text",
+    "text": "# DSCI 552 Homework 5\n**Yang Zhao**\n\n## AI Usage Disclosure\nI used AI tools to help me learn the relevant programming techniques and machine learning concepts, understand code implementations, and assist with debugging.\n\nAI also assisted in constructing, executing, checking, and documenting this submission. All reported numerical results are produced by the executed code below. The supplied homework PDF does not prescribe an additional disclosure format.\n\n## Requirements and experimental protocol\nThe two-page assignment and all five footnotes were read, as were both supplied .names files and the supplied KDnuggets article. Local data are used without downloading replacements. The original question order is retained: 1(a) data, 1(b) full tree, 1(c) all rules, 1(d) pruning; 2(a) ordered split, 2(b) imputation, 2(c) correlations, 2(d) CV, 2(e) 11 feature plots, 2(f) OLS, 2(g) Ridge, 2(h) both LASSOs, 2(i) PCR, 2(j) XGBoost.\n\nSeed 552 is fixed. All regression models retain all 122 predictive variables as candidate inputs; the 11-variable CV ranking is descriptive only. Regression tuning uses the same shuffled five-fold KFold within the training portion, minimizing validation MSE. The mandated external split is never shuffled. Imputation, scaling and PCA are fitted separately in each training fold through Pipeline. The test set is evaluated once per final fitted model, after all six models are frozen. No test metric is used to revise a model."
+  },
+  {
+    "kind": "table",
+    "name": "versions",
+    "columns": [
+      "Dependency",
+      "Version"
+    ],
+    "rows": [
+      [
+        "Python",
+        "3.13.5"
+      ],
+      [
+        "numpy",
+        "2.5.4"
+      ],
+      [
+        "pandas",
+        "3.1.0"
+      ],
+      [
+        "scipy",
+        "1.18.1"
+      ],
+      [
+        "scikit-learn",
+        "1.9.1"
+      ],
+      [
+        "xgboost",
+        "3.4.1"
+      ],
+      [
+        "matplotlib",
+        "3.11.2"
+      ],
+      [
+        "seaborn",
+        "0.13.2"
+      ],
+      [
+        "nbformat",
+        "5.11.1"
+      ],
+      [
+        "nbclient",
+        "0.11.0"
+      ],
+      [
+        "ipykernel",
+        "7.4.0"
+      ],
+      [
+        "reportlab",
+        "5.1.0"
+      ],
+      [
+        "pdfplumber",
+        "0.11.10"
+      ],
+      [
+        "pypdf",
+        "6.21.4"
+      ],
+      [
+        "pypdfium2",
+        "5.14.0"
+      ],
+      [
+        "threadpoolctl",
+        "3.7.0"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "## 1(a) Acute Inflammations: data and label powerset\nThe actual byte encoding is detected from the BOM (UTF-16 if present, otherwise UTF-8); this takes precedence over the ASCII statement in diagnosis.names. Tabs separate fields. Decimal commas in temperature are converted to decimal points. The five binary symptoms and two diagnoses map no to 0 and yes to 1. The label powerset code is 2*d1+d2, so both original diagnoses remain identifiable. d1 denotes inflammation of urinary bladder; d2 denotes nephritis of renal pelvis origin. These are expert-created illustrative records, not evidence of clinical performance."
+  },
+  {
+    "kind": "table",
+    "name": "label_mapping",
+    "columns": [
+      "Powerset class",
+      "Bladder inflammation (d1)",
+      "Renal pelvis nephritis (d2)",
+      "Records"
+    ],
+    "rows": [
+      [
+        "0",
+        "no",
+        "no",
+        "30"
+      ],
+      [
+        "1",
+        "no",
+        "yes",
+        "31"
+      ],
+      [
+        "2",
+        "yes",
+        "no",
+        "40"
+      ],
+      [
+        "3",
+        "yes",
+        "yes",
+        "19"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "Validated: 120 rows, 6 predictors, 2 labels; encoding **utf-16**; no missing values."
+  },
+  {
+    "kind": "text",
+    "text": "## 1(b) Full-data decision tree\nA CART classifier uses Gini impurity and the powerset target, with ccp_alpha=0 and otherwise unrestricted growth. As requested, the final tree is fitted to all 120 records. Tree class labels explicitly show both diagnoses (0=no, 1=yes). Training accuracy is a description of fit, not a held-out estimate."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/tree_full.png",
+    "caption": "1(b): Unpruned full-data decision tree All nodes and both diagnosis labels are shown."
+  },
+  {
+    "kind": "text",
+    "text": "## 1(c) All root-to-leaf IF-THEN rules\nEach conjunction is one complete path. Binary branches are translated back to yes/no, and leaf classes back to the original two diagnoses. Temperature thresholds retain the model threshold to sufficient precision. n is the training support of the leaf. The executable path conditions are checked against tree predictions for every record, with exactly one matching rule per record."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 1.** IF Lumbar pain = no AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = no (n=10)."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 2.** IF Lumbar pain = no AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = no (n=40)."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 3.** IF Lumbar pain = yes AND Temperature (C) <= 37.950001 THEN bladder inflammation = no; renal pelvis nephritis = no (n=20)."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 4.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=21)."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 5.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=10)."
+  },
+  {
+    "kind": "text",
+    "text": "**Rule 6.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = yes (n=19)."
+  },
+  {
+    "kind": "text",
+    "text": "## 1(d) Cost-complexity pruning and interpretable minimum\nCART minimizes training leaf impurity plus alpha times the number of leaves. To define a useful minimum, a predeclared grid of 401 alpha values from 0 through 0.4 is evaluated by shuffled stratified five-fold CV on exact-match powerset accuracy. This grid is independent of label-derived pruning breakpoints. Select the largest alpha whose mean accuracy is within one standard error of the best mean; ties therefore favor fewer leaves. The standard error is the sample standard deviation of five fold accuracies divided by sqrt(5). This is a practical simplicity rule, not a proof of globally minimal trees or statistical equivalence. Final candidates are then refitted on all 120 records. The full-data pruning path is reported descriptively, not used to construct the CV grid. A stump is explicitly compared to the chosen model."
+  },
+  {
+    "kind": "table",
+    "name": "pruning_path",
+    "columns": [
+      "alpha breakpoint",
+      "Leaf impurity",
+      "Nodes",
+      "Leaves",
+      "Depth",
+      "Train exact accuracy"
+    ],
+    "rows": [
+      [
+        "0.0",
+        "0.0",
+        "11.0",
+        "6.0",
+        "4.0",
+        "1.0"
+      ],
+      [
+        "0.09816666666666667",
+        "0.19633333333333333",
+        "7.0",
+        "4.0",
+        "2.0",
+        "0.8416666666666667"
+      ],
+      [
+        "0.13333333333333333",
+        "0.32966666666666666",
+        "5.0",
+        "3.0",
+        "2.0",
+        "0.7583333333333333"
+      ],
+      [
+        "0.18199999999999997",
+        "0.5116666666666666",
+        "3.0",
+        "2.0",
+        "1.0",
+        "0.5916666666666667"
+      ],
+      [
+        "0.22291666666666676",
+        "0.7345833333333334",
+        "1.0",
+        "1.0",
+        "0.0",
+        "0.3333333333333333"
+      ]
+    ]
+  },
+  {
+    "kind": "table",
+    "name": "tree_comparison",
+    "columns": [
+      "Tree",
+      "alpha",
+      "Nodes",
+      "Leaves",
+      "Depth",
+      "Train accuracy",
+      "Train Hamming loss",
+      "CV accuracy"
+    ],
+    "rows": [
+      [
+        "Unpruned",
+        "0.0",
+        "11",
+        "6",
+        "4",
+        "1.0",
+        "0.0",
+        "0.9916666666666668"
+      ],
+      [
+        "Selected",
+        "0.089",
+        "11",
+        "6",
+        "4",
+        "1.0",
+        "0.0",
+        "0.9916666666666668"
+      ],
+      [
+        "Stump baseline",
+        "1.0",
+        "1",
+        "1",
+        "0",
+        "0.3333333333333333",
+        "0.4625",
+        "0.3333333333333333"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "The best CV accuracy is **0.9917**, SE **0.0083**; the acceptance threshold is **0.9833**. Selected alpha = **0.089**. The selected tree has **6 leaves** and depth **4** versus **6 leaves** and depth **4** before pruning. No smaller subtree meets this criterion; keeping the original structure is preferable to sacrificing useful accuracy."
+  },
+  {
+    "kind": "text",
+    "text": "These CV scores informed alpha selection and are not an independent post-selection performance estimate. There is no separate test set in Question 1, in accordance with the full-data fitting requirement."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/pruning_selection.png",
+    "caption": "Alpha selection using only the acute-inflammations data."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/tree_pruned.png",
+    "caption": "1(d): Selected cost-complexity-pruned tree All nodes and both diagnosis labels are shown."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 1.** IF Lumbar pain = no AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = no (n=10)."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 2.** IF Lumbar pain = no AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = no (n=40)."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 3.** IF Lumbar pain = yes AND Temperature (C) <= 37.950001 THEN bladder inflammation = no; renal pelvis nephritis = no (n=20)."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 4.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=21)."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 5.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=10)."
+  },
+  {
+    "kind": "text",
+    "text": "**Pruned rule 6.** IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = yes (n=19)."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(a) Communities and Crime: data and ordered split\nRead the 128 attribute names directly from @attribute lines in communities.names. Keep original file order: training is original rows 1-1495, test is rows 1496-1994. The target is ViolentCrimesPerPop. The provided data were already normalized approximately to [0,1]; this is different from standardization to zero mean and unit variance. The data combine the 1990 Census, 1990 LEMAS and 1995 FBI UCR; normalization parameters used by the original dataset creator cannot be undone. All additional preprocessing here is learned solely from training data."
+  },
+  {
+    "kind": "text",
+    "text": "Validated raw shape: **(1994, 128)**. Training: **(1495, 122)**. Test: **(499, 122)**. Target excluded from predictors; all five nonpredictive fields removed."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(b) Missing values and imputation\nQuestion marks are parsed as NaN. Median imputation is robust to skew and retains all 122 predictors, including sparsely observed LEMAS variables. A median cannot reconstruct missing information or remove selection bias: LEMAS coverage is highly nonrandom according to the supplied documentation. No rows or predictive columns are dropped. An all-missing column within a training fold is retained and filled with zero via keep_empty_features=True (the audit below checks whether this fallback is actually needed). The descriptive training matrix is median-imputed using training rows only. Predictive CV uses a separate SimpleImputer inside every Pipeline; the descriptive matrix is never passed to GridSearchCV."
+  },
+  {
+    "kind": "table",
+    "name": "missingness",
+    "columns": [
+      "Feature",
+      "Train missing",
+      "Train missing fraction"
+    ],
+    "rows": [
+      [
+        "OtherPerCap",
+        "1",
+        "0.0006688963210702341"
+      ],
+      [
+        "LemasSwornFT",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasSwFTPerPop",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasSwFTFieldOps",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasSwFTFieldPerPop",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasTotalReq",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasTotReqPerPop",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicReqPerOffic",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicPerPop",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "RacialMatchCommPol",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PctPolicWhite",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PctPolicBlack",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PctPolicHisp",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PctPolicAsian",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PctPolicMinor",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "OfficAssgnDrugUnits",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "NumKindsDrugsSeiz",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicAveOTWorked",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicCars",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicOperBudg",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasPctPolicOnPatr",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "LemasGangUnitDeploy",
+        "1256",
+        "0.8401337792642141"
+      ],
+      [
+        "PolicBudgPerPop",
+        "1256",
+        "0.8401337792642141"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "All-missing training-fold columns across five folds: **0**. Number of predictive columns dropped: **0**."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(c) Feature correlation matrix\nPearson correlations below use the median-imputed 1495-row training matrix, before standardization. The target is excluded. All 122 feature labels are shown in a large overview and four enlarged row panels; the complete numeric matrix is also exported. Strong blocks of correlation indicate redundant predictors and motivate regularization and PCR. Imputation can alter correlations, especially for sparse LEMAS fields. These correlations describe association, not causation."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/correlation_overview.png",
+    "caption": "Full training feature correlation matrix; use the following enlarged panels for labels."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/correlation_panel_1.png",
+    "caption": "Enlarged matrix panel 1: training predictors 1-31."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/correlation_panel_2.png",
+    "caption": "Enlarged matrix panel 2: training predictors 32-62."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/correlation_panel_3.png",
+    "caption": "Enlarged matrix panel 3: training predictors 63-93."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/correlation_panel_4.png",
+    "caption": "Enlarged matrix panel 4: training predictors 94-122."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(d) Coefficient of variation for every predictor\nCV = s/m uses sample standard deviation with ddof=1 and sample mean over the median-imputed training rows only. CV is computed before standardization. A nonzero constant with nonzero mean has CV=0; any zero (or numerically near-zero, absolute tolerance 1e-12) mean has undefined CV and is excluded from ranking. All-zero columns are also undefined. This rule avoids replacing an undefined ratio with an arbitrary large number. The target and identifier fields are excluded. CV is sensitive to the dataset's normalization origin and does not measure predictive importance."
+  },
+  {
+    "kind": "table",
+    "name": "coefficient_of_variation",
+    "columns": [
+      "Feature",
+      "Mean",
+      "Sample SD (ddof=1)",
+      "CV"
+    ],
+    "rows": [
+      [
+        "PctPolicAsian",
+        "0.01625418060200669",
+        "0.08983781091497128",
+        "5.5270587373614015"
+      ],
+      [
+        "NumStreet",
+        "0.022983277591973245",
+        "0.0986654407484482",
+        "4.2929229894915615"
+      ],
+      [
+        "NumInShelters",
+        "0.029598662207357858",
+        "0.1027355399210407",
+        "3.470952139705217"
+      ],
+      [
+        "NumIlleg",
+        "0.03720401337792643",
+        "0.11380575049617284",
+        "3.0589643472092476"
+      ],
+      [
+        "NumImmig",
+        "0.030595317725752504",
+        "0.0895413352275924",
+        "2.926635246288821"
+      ],
+      [
+        "LemasPctOfficDrugUn",
+        "0.09330434782608696",
+        "0.23820091600727786",
+        "2.552945511727582"
+      ],
+      [
+        "NumUnderPov",
+        "0.0568494983277592",
+        "0.13316671601831634",
+        "2.3424431162181776"
+      ],
+      [
+        "LemasSwornFT",
+        "0.028749163879598666",
+        "0.06462931546887322",
+        "2.2480415687753714"
+      ],
+      [
+        "population",
+        "0.05816722408026757",
+        "0.130358834885291",
+        "2.2411046245803816"
+      ],
+      [
+        "numbUrban",
+        "0.06464882943143813",
+        "0.1317841492934094",
+        "2.0384614919156445"
+      ],
+      [
+        "HousVacant",
+        "0.07647491638795988",
+        "0.15053835299506313",
+        "1.9684670491351295"
+      ],
+      [
+        "PolicOperBudg",
+        "0.03807357859531773",
+        "0.06265036480668985",
+        "1.6455076490864604"
+      ],
+      [
+        "LandArea",
+        "0.06410702341137124",
+        "0.10548220021605129",
+        "1.6454078602149067"
+      ],
+      [
+        "racePctHisp",
+        "0.14496321070234114",
+        "0.23369388806227492",
+        "1.6120910052284099"
+      ],
+      [
+        "PctNotSpeakEnglWell",
+        "0.15187959866220735",
+        "0.22123061306050443",
+        "1.4566183675039819"
+      ],
+      [
+        "LemasTotalReq",
+        "0.049705685618729095",
+        "0.07216702376008298",
+        "1.4518866979050473"
+      ],
+      [
+        "racepctblack",
+        "0.17983946488294314",
+        "0.25696998906910634",
+        "1.4288854186502788"
+      ],
+      [
+        "PctUsePubTrans",
+        "0.16519732441471574",
+        "0.2307987944660305",
+        "1.3971097612127608"
+      ],
+      [
+        "racePctAsian",
+        "0.15371237458193981",
+        "0.20891043974564563",
+        "1.3590996841590086"
+      ],
+      [
+        "PctPolicHisp",
+        "0.06378595317725753",
+        "0.08635862581325561",
+        "1.3538815603063876"
+      ],
+      [
+        "PctRecentImmig",
+        "0.1850769230769231",
+        "0.23843219248011427",
+        "1.288286991787816"
+      ],
+      [
+        "PctRecImmig5",
+        "0.18494314381270904",
+        "0.23787092526514325",
+        "1.286184069121448"
+      ],
+      [
+        "PctRecImmig10",
+        "0.18531772575250838",
+        "0.23544174221255396",
+        "1.270476103980394"
+      ],
+      [
+        "PctRecImmig8",
+        "0.18789297658862875",
+        "0.2377933795326685",
+        "1.2655788622333195"
+      ],
+      [
+        "OfficAssgnDrugUnits",
+        "0.045933110367892965",
+        "0.05395144645874805",
+        "1.1745654937502308"
+      ],
+      [
+        "PctPersDenseHous",
+        "0.1873979933110368",
+        "0.21230799372480325",
+        "1.1329256518367392"
+      ],
+      [
+        "PolicCars",
+        "0.08502341137123748",
+        "0.09461672908154084",
+        "1.1128314843592442"
+      ],
+      [
+        "PctForeignBorn",
+        "0.2182809364548495",
+        "0.23266122651418517",
+        "1.0658797341301958"
+      ],
+      [
+        "PctVacantBoarded",
+        "0.20331772575250834",
+        "0.21446509544016798",
+        "1.0548273380808368"
+      ],
+      [
+        "PctHousNoPhone",
+        "0.26548494983277593",
+        "0.2449801557564175",
+        "0.922764759022031"
+      ],
+      [
+        "PctIlleg",
+        "0.24979264214046823",
+        "0.23019640604085356",
+        "0.921549986694184"
+      ],
+      [
+        "OwnOccMedVal",
+        "0.26296989966555184",
+        "0.23388805782116234",
+        "0.8894099975648311"
+      ],
+      [
+        "OwnOccHiQuart",
+        "0.26872240802675584",
+        "0.23743844379386506",
+        "0.8835825993723012"
+      ],
+      [
+        "PopDens",
+        "0.23375919732441475",
+        "0.20208463989315842",
+        "0.8644992034803325"
+      ],
+      [
+        "OwnOccLowQuart",
+        "0.26410033444816056",
+        "0.2270115568740338",
+        "0.8595655789242977"
+      ],
+      [
+        "PctWOFullPlumb",
+        "0.24755183946488296",
+        "0.20873726260740072",
+        "0.8432062676593911"
+      ],
+      [
+        "indianPerCap",
+        "0.20255518394648833",
+        "0.16576470638553292",
+        "0.8183681264327709"
+      ],
+      [
+        "MedNumBR",
+        "0.3130434782608696",
+        "0.25480082802808396",
+        "0.8139470895341571"
+      ],
+      [
+        "PctPolicBlack",
+        "0.1367759197324415",
+        "0.10612267134894972",
+        "0.7758870973526986"
+      ],
+      [
+        "PctLargHouseOccup",
+        "0.25226086956521737",
+        "0.1925248958342192",
+        "0.7631976222314791"
+      ],
+      [
+        "PctPopUnderPov",
+        "0.3078795986622073",
+        "0.23228591405560384",
+        "0.7544699780853562"
+      ],
+      [
+        "PctLargHouseFam",
+        "0.2685551839464883",
+        "0.19837944386083894",
+        "0.7386915454231842"
+      ],
+      [
+        "pctWPubAsst",
+        "0.32344481605351166",
+        "0.22841863560265524",
+        "0.7062058943769406"
+      ],
+      [
+        "pctWFarmSelf",
+        "0.2905886287625418",
+        "0.203963540470245",
+        "0.7018978730820069"
+      ],
+      [
+        "PctImmigRecent",
+        "0.324943143812709",
+        "0.2214443432712081",
+        "0.6814864307426175"
+      ],
+      [
+        "PctLess9thGrade",
+        "0.32014715719063547",
+        "0.21785704452924193",
+        "0.6804903296377433"
+      ],
+      [
+        "OtherPerCap",
+        "0.28179264214046823",
+        "0.1897250101170058",
+        "0.6732787934982046"
+      ],
+      [
+        "pctUrban",
+        "0.6933177257525084",
+        "0.44602389170093854",
+        "0.6433181716461038"
+      ],
+      [
+        "RentLowQ",
+        "0.34577257525083616",
+        "0.22117745435657044",
+        "0.6396616452190292"
+      ],
+      [
+        "AsianPerCap",
+        "0.32610702341137127",
+        "0.2005119666735295",
+        "0.6148655265869312"
+      ],
+      [
+        "blackPerCap",
+        "0.29193979933110364",
+        "0.17497135849370432",
+        "0.5993405451897995"
+      ],
+      [
+        "RentHighQ",
+        "0.42146488294314377",
+        "0.2503752096086645",
+        "0.5940594809708986"
+      ],
+      [
+        "PctBSorMore",
+        "0.3620401337792643",
+        "0.21457388674488498",
+        "0.5926798349812525"
+      ],
+      [
+        "medIncome",
+        "0.3592173913043478",
+        "0.21264885226438796",
+        "0.5919781653450645"
+      ],
+      [
+        "PctImmigRec5",
+        "0.3628963210702341",
+        "0.2143967579804025",
+        "0.5907934182085816"
+      ],
+      [
+        "RentMedian",
+        "0.3719732441471572",
+        "0.2115700834728928",
+        "0.5687776924869173"
+      ],
+      [
+        "MedRent",
+        "0.3833110367892976",
+        "0.21597373031770487",
+        "0.5634425038390521"
+      ],
+      [
+        "PctUnemployed",
+        "0.36660200668896326",
+        "0.20618602321040722",
+        "0.5624246988515312"
+      ],
+      [
+        "perCapInc",
+        "0.35050836120401335",
+        "0.19561151437277616",
+        "0.5580794526579652"
+      ],
+      [
+        "medFamInc",
+        "0.37488294314381276",
+        "0.20268801824724972",
+        "0.5406701530549349"
+      ],
+      [
+        "PctNotHSGrad",
+        "0.38761872909698997",
+        "0.20689280715303637",
+        "0.5337533808931809"
+      ],
+      [
+        "whitePerCap",
+        "0.36828093645484944",
+        "0.19144291463177776",
+        "0.519828467024788"
+      ],
+      [
+        "PctOccupManu",
+        "0.3960936454849499",
+        "0.20453458267113467",
+        "0.516379358776929"
+      ],
+      [
+        "PctEmplManu",
+        "0.4010702341137124",
+        "0.2059614987633289",
+        "0.5135297542547976"
+      ],
+      [
+        "PctImmigRec8",
+        "0.4016387959866221",
+        "0.20285658268617174",
+        "0.5050721810572516"
+      ],
+      [
+        "agePct16t24",
+        "0.3354247491638796",
+        "0.1678163265817429",
+        "0.5003099115377211"
+      ],
+      [
+        "HispPerCap",
+        "0.387056856187291",
+        "0.18736181908226476",
+        "0.4840679504501612"
+      ],
+      [
+        "PersPerRentOccHous",
+        "0.40168561872909697",
+        "0.19026042928314285",
+        "0.47365506857106937"
+      ],
+      [
+        "MedYrHousBuilt",
+        "0.489324414715719",
+        "0.23035537654659655",
+        "0.47076207444181023"
+      ],
+      [
+        "MedOwnCostPctIncNoMtg",
+        "0.40555183946488294",
+        "0.1906933023571703",
+        "0.4702069718356748"
+      ],
+      [
+        "PctImmigRec10",
+        "0.42993979933110366",
+        "0.1968042786229432",
+        "0.45774845438624073"
+      ],
+      [
+        "PctPolicMinor",
+        "0.21007357859531778",
+        "0.09537950656189711",
+        "0.4540290463925242"
+      ],
+      [
+        "PctVacMore6Mos",
+        "0.43032775919732436",
+        "0.18851874407105176",
+        "0.4380817645198844"
+      ],
+      [
+        "PctOccupMgmtProf",
+        "0.44072240802675583",
+        "0.19068715977879955",
+        "0.4326695359842541"
+      ],
+      [
+        "MedOwnCostPctInc",
+        "0.44830769230769235",
+        "0.18627256601485365",
+        "0.4155016057297696"
+      ],
+      [
+        "agePct65up",
+        "0.42856856187290965",
+        "0.17690280634624783",
+        "0.4127759758512284"
+      ],
+      [
+        "PolicBudgPerPop",
+        "0.15651505016722406",
+        "0.0639598236688927",
+        "0.4086496704346109"
+      ],
+      [
+        "MalePctNevMarr",
+        "0.4356655518394649",
+        "0.1760356860649375",
+        "0.4040615222426481"
+      ],
+      [
+        "PctEmplProfServ",
+        "0.4415117056856187",
+        "0.17786248231116428",
+        "0.4028488486731367"
+      ],
+      [
+        "MalePctDivorce",
+        "0.4626220735785954",
+        "0.18475556678726482",
+        "0.3993660859242949"
+      ],
+      [
+        "LemasTotReqPerPop",
+        "0.17703010033444813",
+        "0.0684520647680355",
+        "0.3866690728792152"
+      ],
+      [
+        "TotalPctDiv",
+        "0.4954782608695652",
+        "0.1852615522261752",
+        "0.3739045016849798"
+      ],
+      [
+        "agePct12t21",
+        "0.4226488294314381",
+        "0.15599254829680442",
+        "0.3690831192095126"
+      ],
+      [
+        "PersPerOccupHous",
+        "0.45985953177257527",
+        "0.16888497725756418",
+        "0.3672534015041069"
+      ],
+      [
+        "pctWInvInc",
+        "0.49578595317725754",
+        "0.1811277543344442",
+        "0.36533458274419056"
+      ],
+      [
+        "pctWSocSec",
+        "0.47561872909698993",
+        "0.17156302223805303",
+        "0.36071544651696685"
+      ],
+      [
+        "FemalePctDiv",
+        "0.4883076923076923",
+        "0.17598112512414169",
+        "0.36038982775895434"
+      ],
+      [
+        "householdsize",
+        "0.46173244147157194",
+        "0.164284202469735",
+        "0.3557995664028941"
+      ],
+      [
+        "PctEmploy",
+        "0.49554515050167236",
+        "0.17415954368006023",
+        "0.3514504046780546"
+      ],
+      [
+        "PctPersOwnOccup",
+        "0.5614247491638796",
+        "0.1960549080335493",
+        "0.3492095927825244"
+      ],
+      [
+        "pctWRetire",
+        "0.47844147157190636",
+        "0.16526371086546635",
+        "0.34542095676300166"
+      ],
+      [
+        "PolicPerPop",
+        "0.185571906354515",
+        "0.06388622553123983",
+        "0.3442666877021359"
+      ],
+      [
+        "LemasSwFTPerPop",
+        "0.185571906354515",
+        "0.06388622553123983",
+        "0.3442666877021359"
+      ],
+      [
+        "PctHousLess3BR",
+        "0.49793979933110366",
+        "0.17106887881735192",
+        "0.3435533352568995"
+      ],
+      [
+        "MedRentPctHousInc",
+        "0.48981939799331103",
+        "0.16803982769890527",
+        "0.34306486918919454"
+      ],
+      [
+        "PctWorkMomYoungKids",
+        "0.4994916387959866",
+        "0.17016728057169303",
+        "0.34068093908814456"
+      ],
+      [
+        "PolicAveOTWorked",
+        "0.2869698996655519",
+        "0.09649955658624552",
+        "0.3362706566044404"
+      ],
+      [
+        "PctBornSameState",
+        "0.6113110367892978",
+        "0.20555021399605486",
+        "0.3362448927400969"
+      ],
+      [
+        "PctHousOwnOcc",
+        "0.5470167224080267",
+        "0.18386795830793679",
+        "0.3361285876207407"
+      ],
+      [
+        "PctWorkMom",
+        "0.5240468227424749",
+        "0.17608910806042324",
+        "0.3360178908039221"
+      ],
+      [
+        "LemasGangUnitDeploy",
+        "0.49230769230769234",
+        "0.16497441784064504",
+        "0.3351042862388102"
+      ],
+      [
+        "PctKids2Par",
+        "0.6195384615384616",
+        "0.20746829492536437",
+        "0.3348755691618744"
+      ],
+      [
+        "PctSameHouse85",
+        "0.5373645484949832",
+        "0.1797585326699424",
+        "0.3345187790549243"
+      ],
+      [
+        "PctYoungKids2Par",
+        "0.6611571906354515",
+        "0.22071639786525504",
+        "0.3338334680337063"
+      ],
+      [
+        "PctFam2Par",
+        "0.6093979933110367",
+        "0.2030481544068271",
+        "0.33319465543955495"
+      ],
+      [
+        "racePctWhite",
+        "0.7528294314381271",
+        "0.24859381167443093",
+        "0.3302126634442853"
+      ],
+      [
+        "pctWWage",
+        "0.5534983277591974",
+        "0.18188733097319837",
+        "0.3286140569015946"
+      ],
+      [
+        "PctTeen2Par",
+        "0.5832642140468227",
+        "0.19119449546824588",
+        "0.32780083341937616"
+      ],
+      [
+        "PersPerOwnOccHous",
+        "0.4930702341137124",
+        "0.15739514396039872",
+        "0.3192144507431371"
+      ],
+      [
+        "PctSameCity85",
+        "0.6295719063545151",
+        "0.20068111267043004",
+        "0.3187580491519352"
+      ],
+      [
+        "PersPerFam",
+        "0.4866822742474916",
+        "0.15446098375378528",
+        "0.3173754047085708"
+      ],
+      [
+        "PctSameState85",
+        "0.6559063545150502",
+        "0.19574480505985276",
+        "0.29843407326733146"
+      ],
+      [
+        "agePct12t29",
+        "0.49208695652173917",
+        "0.14335221855518512",
+        "0.29131481063520565"
+      ],
+      [
+        "PctSpeakEnglOnly",
+        "0.784046822742475",
+        "0.2273725376964703",
+        "0.2899986724021867"
+      ],
+      [
+        "LemasSwFTFieldPerPop",
+        "0.21563879598662208",
+        "0.06167977148192185",
+        "0.28603281334286607"
+      ],
+      [
+        "PctHousOccup",
+        "0.7210301003344481",
+        "0.19336693664050453",
+        "0.268181503866221"
+      ],
+      [
+        "PolicReqPerOffic",
+        "0.30712374581939794",
+        "0.07951422168696749",
+        "0.2588996219580016"
+      ],
+      [
+        "NumKindsDrugsSeiz",
+        "0.5671304347826088",
+        "0.07997736278290937",
+        "0.1410211088628423"
+      ],
+      [
+        "RacialMatchCommPol",
+        "0.7223745819397995",
+        "0.09365717710549087",
+        "0.12965181700329537"
+      ],
+      [
+        "PctPolicWhite",
+        "0.7628561872909697",
+        "0.09057197423548131",
+        "0.11872745577002868"
+      ],
+      [
+        "LemasPctPolicOnPatr",
+        "0.752494983277592",
+        "0.08430356361548108",
+        "0.11203206066342887"
+      ],
+      [
+        "LemasSwFTFieldOps",
+        "0.9618795986622074",
+        "0.06195832649500019",
+        "0.0644138066564386"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "Undefined CVs: **0**; constant training predictors: **0**. All 122 coefficients are reported above and in results/coefficient_of_variation.csv."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(e) The 11 highest-CV predictors: scatter plots and box plots\nThe count is floor(sqrt(128))=11 as specified, even though only 122 columns are predictive. These plots use the same imputed training rows. Each scatter plot has a predictor on the horizontal axis and ViolentCrimesPerPop on the vertical axis; each box plot summarizes one predictor. The 11-feature selection does not restrict subsequent regression models.\n\nScatter patterns can suggest skew, outliers, nonlinear associations, and heteroskedasticity. Neither scatter plots nor box plots establish statistical significance. Formal inference would require a specified null, a suitable model and assumptions, uncertainty estimates and multiple-comparison handling. Large CV alone does not imply a significant relationship with the target, and these observational data cannot establish causal effects."
+  },
+  {
+    "kind": "table",
+    "name": "top11_cv",
+    "columns": [
+      "Feature",
+      "Mean",
+      "Sample SD (ddof=1)",
+      "CV"
+    ],
+    "rows": [
+      [
+        "PctPolicAsian",
+        "0.01625418060200669",
+        "0.08983781091497128",
+        "5.5270587373614015"
+      ],
+      [
+        "NumStreet",
+        "0.022983277591973245",
+        "0.0986654407484482",
+        "4.2929229894915615"
+      ],
+      [
+        "NumInShelters",
+        "0.029598662207357858",
+        "0.1027355399210407",
+        "3.470952139705217"
+      ],
+      [
+        "NumIlleg",
+        "0.03720401337792643",
+        "0.11380575049617284",
+        "3.0589643472092476"
+      ],
+      [
+        "NumImmig",
+        "0.030595317725752504",
+        "0.0895413352275924",
+        "2.926635246288821"
+      ],
+      [
+        "LemasPctOfficDrugUn",
+        "0.09330434782608696",
+        "0.23820091600727786",
+        "2.552945511727582"
+      ],
+      [
+        "NumUnderPov",
+        "0.0568494983277592",
+        "0.13316671601831634",
+        "2.3424431162181776"
+      ],
+      [
+        "LemasSwornFT",
+        "0.028749163879598666",
+        "0.06462931546887322",
+        "2.2480415687753714"
+      ],
+      [
+        "population",
+        "0.05816722408026757",
+        "0.130358834885291",
+        "2.2411046245803816"
+      ],
+      [
+        "numbUrban",
+        "0.06464882943143813",
+        "0.1317841492934094",
+        "2.0384614919156445"
+      ],
+      [
+        "HousVacant",
+        "0.07647491638795988",
+        "0.15053835299506313",
+        "1.9684670491351295"
+      ]
+    ]
+  },
+  {
+    "kind": "figure",
+    "path": "figures/top11_scatter.png",
+    "caption": "Scatter plots for the 11 highest training CV predictors; y is always the crime target."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/top11_boxplots.png",
+    "caption": "Individual horizontal box plots of the selected predictors."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(f) Ordinary least squares\nOLS fits an intercept and all 122 imputed predictors by minimizing residual sum of squares. It has no tuned hyperparameter. Coefficients can be unstable under multicollinearity; the matrix rank and condition number below describe this concern. Main test error is MSE = mean((y-yhat)^2), with RMSE=sqrt(MSE) and R-squared also reported. All model test results are deliberately collected together after Question 2(j) has frozen every fitted model."
+  },
+  {
+    "kind": "text",
+    "text": "Centered training design rank = **121 / 122**; condition number = **3.51e+16**."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(g) Ridge regression\nA Pipeline applies median imputation and StandardScaler before Ridge. Scikit-learn Ridge minimizes ||y-Xb||^2 + alpha*||b||^2, with an unpenalized intercept. Thus its alpha is the assignment's lambda under this convention. A 49-point logarithmic grid from 1e-6 through 1e6 is searched using training-fold MSE; if an artificial endpoint wins, the range is expanded. Standardizing equalizes penalty treatment across features, despite their existing [0,1] normalization."
+  },
+  {
+    "kind": "text",
+    "text": "**Ridge:** model__alpha = **56.23413251903491**; five-fold CV MSE = **0.01914446**; final grid [1e-06, 1000000.0], 49 candidates. Convergence warnings: **0**. The selected value is interior to the final search range."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(h) LASSO without and with standardization\nBoth models use median imputation inside CV. The first retains the original supplied normalized units; the second applies fold-fitted StandardScaler. Lasso minimizes ||y-Xb||^2/(2*n) + alpha*||b||_1 with an unpenalized intercept, so numerical alpha is not directly comparable with Ridge alpha. Each model searches 41 logarithmically spaced values from 1e-5 to 1e-1, expanding artificial boundaries if needed. A strict tolerance of 1e-7 and max_iter=200000 are used; convergence warnings cause execution to fail instead of being hidden. Selected variables have absolute fitted coefficient greater than 1e-10. Coefficients for the standardized fit are expressed per training standard deviation; original-unit equivalents are also exported."
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_unscaled:** model__alpha = **0.0001**; five-fold CV MSE = **0.01899094**; final grid [1e-05, 0.1], 41 candidates. Convergence warnings: **0**. The selected value is interior to the final search range."
+  },
+  {
+    "kind": "table",
+    "name": "selected_LASSO_unscaled",
+    "columns": [
+      "Feature",
+      "Fitted coefficient",
+      "Original-unit coefficient"
+    ],
+    "rows": [
+      [
+        "racepctblack",
+        "0.2688077355912819",
+        "0.2688077355912819"
+      ],
+      [
+        "racePctAsian",
+        "-0.0172313551209166",
+        "-0.0172313551209166"
+      ],
+      [
+        "agePct12t21",
+        "0.07472100603618533",
+        "0.07472100603618533"
+      ],
+      [
+        "agePct12t29",
+        "-0.2910534206446236",
+        "-0.2910534206446236"
+      ],
+      [
+        "agePct65up",
+        "0.0020029912516598474",
+        "0.0020029912516598474"
+      ],
+      [
+        "pctUrban",
+        "0.04124880611469508",
+        "0.04124880611469508"
+      ],
+      [
+        "pctWWage",
+        "-0.0922777599547164",
+        "-0.0922777599547164"
+      ],
+      [
+        "pctWFarmSelf",
+        "0.02909083447359236",
+        "0.02909083447359236"
+      ],
+      [
+        "pctWInvInc",
+        "-0.11136971469737562",
+        "-0.11136971469737562"
+      ],
+      [
+        "pctWSocSec",
+        "0.06071020673408404",
+        "0.06071020673408404"
+      ],
+      [
+        "pctWPubAsst",
+        "0.043171414355250334",
+        "0.043171414355250334"
+      ],
+      [
+        "pctWRetire",
+        "-0.10942481069312271",
+        "-0.10942481069312271"
+      ],
+      [
+        "whitePerCap",
+        "-0.06357965774142424",
+        "-0.06357965774142424"
+      ],
+      [
+        "blackPerCap",
+        "-0.02300254619458223",
+        "-0.02300254619458223"
+      ],
+      [
+        "indianPerCap",
+        "-0.03130482989330254",
+        "-0.03130482989330254"
+      ],
+      [
+        "AsianPerCap",
+        "0.028907475986713563",
+        "0.028907475986713563"
+      ],
+      [
+        "OtherPerCap",
+        "0.023876455595650384",
+        "0.023876455595650384"
+      ],
+      [
+        "HispPerCap",
+        "0.024681521483213092",
+        "0.024681521483213092"
+      ],
+      [
+        "PctPopUnderPov",
+        "-0.14881984567287487",
+        "-0.14881984567287487"
+      ],
+      [
+        "PctLess9thGrade",
+        "-0.02217115460145402",
+        "-0.02217115460145402"
+      ],
+      [
+        "PctBSorMore",
+        "0.013999050892401867",
+        "0.013999050892401867"
+      ],
+      [
+        "PctEmploy",
+        "0.15546484001539096",
+        "0.15546484001539096"
+      ],
+      [
+        "PctEmplManu",
+        "-0.01859339653956678",
+        "-0.01859339653956678"
+      ],
+      [
+        "PctOccupManu",
+        "0.017011690227032705",
+        "0.017011690227032705"
+      ],
+      [
+        "MalePctDivorce",
+        "0.13106542055602083",
+        "0.13106542055602083"
+      ],
+      [
+        "MalePctNevMarr",
+        "0.15127433577363117",
+        "0.15127433577363117"
+      ],
+      [
+        "FemalePctDiv",
+        "-0.09818412464744519",
+        "-0.09818412464744519"
+      ],
+      [
+        "PctKids2Par",
+        "-0.2003415298718351",
+        "-0.2003415298718351"
+      ],
+      [
+        "PctYoungKids2Par",
+        "-0.03676097383238257",
+        "-0.03676097383238257"
+      ],
+      [
+        "PctTeen2Par",
+        "-0.011027509874149848",
+        "-0.011027509874149848"
+      ],
+      [
+        "PctWorkMom",
+        "-0.13409103825979587",
+        "-0.13409103825979587"
+      ],
+      [
+        "NumIlleg",
+        "-0.10097381152672004",
+        "-0.10097381152672004"
+      ],
+      [
+        "PctIlleg",
+        "0.09706547754505385",
+        "0.09706547754505385"
+      ],
+      [
+        "NumImmig",
+        "-0.10541653739752366",
+        "-0.10541653739752366"
+      ],
+      [
+        "PctImmigRec10",
+        "-0.004814944603313352",
+        "-0.004814944603313352"
+      ],
+      [
+        "PctRecImmig10",
+        "0.04080484619187493",
+        "0.04080484619187493"
+      ],
+      [
+        "PctNotSpeakEnglWell",
+        "-0.08349289130575308",
+        "-0.08349289130575308"
+      ],
+      [
+        "PctLargHouseOccup",
+        "-0.08712313466162866",
+        "-0.08712313466162866"
+      ],
+      [
+        "PersPerOccupHous",
+        "0.07390893695820577",
+        "0.07390893695820577"
+      ],
+      [
+        "PctPersOwnOccup",
+        "-0.06568607977230294",
+        "-0.06568607977230294"
+      ],
+      [
+        "PctPersDenseHous",
+        "0.22585430311737567",
+        "0.22585430311737567"
+      ],
+      [
+        "PctHousLess3BR",
+        "0.06643670771499202",
+        "0.06643670771499202"
+      ],
+      [
+        "MedNumBR",
+        "0.005895841049488845",
+        "0.005895841049488845"
+      ],
+      [
+        "HousVacant",
+        "0.12843241211693313",
+        "0.12843241211693313"
+      ],
+      [
+        "PctHousOccup",
+        "-0.060711142069611604",
+        "-0.060711142069611604"
+      ],
+      [
+        "PctVacantBoarded",
+        "0.07467894719629685",
+        "0.07467894719629685"
+      ],
+      [
+        "PctVacMore6Mos",
+        "-0.0627847714523631",
+        "-0.0627847714523631"
+      ],
+      [
+        "MedYrHousBuilt",
+        "-0.015267477694279148",
+        "-0.015267477694279148"
+      ],
+      [
+        "PctHousNoPhone",
+        "0.027015218952468244",
+        "0.027015218952468244"
+      ],
+      [
+        "PctWOFullPlumb",
+        "-0.025959366846547503",
+        "-0.025959366846547503"
+      ],
+      [
+        "OwnOccLowQuart",
+        "-0.02026432511733964",
+        "-0.02026432511733964"
+      ],
+      [
+        "RentLowQ",
+        "-0.1653958694166396",
+        "-0.1653958694166396"
+      ],
+      [
+        "MedRent",
+        "0.17343590276111695",
+        "0.17343590276111695"
+      ],
+      [
+        "MedRentPctHousInc",
+        "0.0906902241534373",
+        "0.0906902241534373"
+      ],
+      [
+        "MedOwnCostPctInc",
+        "-0.01745248484680614",
+        "-0.01745248484680614"
+      ],
+      [
+        "MedOwnCostPctIncNoMtg",
+        "-0.07984850064773215",
+        "-0.07984850064773215"
+      ],
+      [
+        "NumInShelters",
+        "0.0695764153688254",
+        "0.0695764153688254"
+      ],
+      [
+        "NumStreet",
+        "0.15994335690227518",
+        "0.15994335690227518"
+      ],
+      [
+        "PctForeignBorn",
+        "0.055805332460764114",
+        "0.055805332460764114"
+      ],
+      [
+        "PctSameCity85",
+        "0.024501487581226153",
+        "0.024501487581226153"
+      ],
+      [
+        "LemasSwFTFieldPerPop",
+        "0.0754785468752197",
+        "0.0754785468752197"
+      ],
+      [
+        "LemasTotalReq",
+        "-0.007478922622669554",
+        "-0.007478922622669554"
+      ],
+      [
+        "PolicReqPerOffic",
+        "0.09671155483670935",
+        "0.09671155483670935"
+      ],
+      [
+        "RacialMatchCommPol",
+        "-0.02486532737424627",
+        "-0.02486532737424627"
+      ],
+      [
+        "PctPolicBlack",
+        "-0.019025932849855612",
+        "-0.019025932849855612"
+      ],
+      [
+        "PctPolicHisp",
+        "0.023108810313884832",
+        "0.023108810313884832"
+      ],
+      [
+        "PctPolicAsian",
+        "0.02366305069092118",
+        "0.02366305069092118"
+      ],
+      [
+        "NumKindsDrugsSeiz",
+        "-0.03531494371128897",
+        "-0.03531494371128897"
+      ],
+      [
+        "PolicAveOTWorked",
+        "-0.011519591916318662",
+        "-0.011519591916318662"
+      ],
+      [
+        "LandArea",
+        "0.036054727375666",
+        "0.036054727375666"
+      ],
+      [
+        "PopDens",
+        "0.013375288718827788",
+        "0.013375288718827788"
+      ],
+      [
+        "PctUsePubTrans",
+        "-0.047189596485289885",
+        "-0.047189596485289885"
+      ],
+      [
+        "PolicCars",
+        "0.03070135872298661",
+        "0.03070135872298661"
+      ],
+      [
+        "LemasPctPolicOnPatr",
+        "0.016082077930275128",
+        "0.016082077930275128"
+      ],
+      [
+        "LemasGangUnitDeploy",
+        "0.03796367109799027",
+        "0.03796367109799027"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_unscaled selects 75 variables:** racepctblack, racePctAsian, agePct12t21, agePct12t29, agePct65up, pctUrban, pctWWage, pctWFarmSelf, pctWInvInc, pctWSocSec, pctWPubAsst, pctWRetire, whitePerCap, blackPerCap, indianPerCap, AsianPerCap, OtherPerCap, HispPerCap, PctPopUnderPov, PctLess9thGrade, PctBSorMore, PctEmploy, PctEmplManu, PctOccupManu, MalePctDivorce, MalePctNevMarr, FemalePctDiv, PctKids2Par, PctYoungKids2Par, PctTeen2Par, PctWorkMom, NumIlleg, PctIlleg, NumImmig, PctImmigRec10, PctRecImmig10, PctNotSpeakEnglWell, PctLargHouseOccup, PersPerOccupHous, PctPersOwnOccup, PctPersDenseHous, PctHousLess3BR, MedNumBR, HousVacant, PctHousOccup, PctVacantBoarded, PctVacMore6Mos, MedYrHousBuilt, PctHousNoPhone, PctWOFullPlumb, OwnOccLowQuart, RentLowQ, MedRent, MedRentPctHousInc, MedOwnCostPctInc, MedOwnCostPctIncNoMtg, NumInShelters, NumStreet, PctForeignBorn, PctSameCity85, LemasSwFTFieldPerPop, LemasTotalReq, PolicReqPerOffic, RacialMatchCommPol, PctPolicBlack, PctPolicHisp, PctPolicAsian, NumKindsDrugsSeiz, PolicAveOTWorked, LandArea, PopDens, PctUsePubTrans, PolicCars, LemasPctPolicOnPatr, LemasGangUnitDeploy. Final solver iterations: 573; dual gap: 5.54e-09."
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_scaled:** model__alpha = **0.000630957344480193**; five-fold CV MSE = **0.01910257**; final grid [1e-05, 0.1], 41 candidates. Convergence warnings: **0**. The selected value is interior to the final search range."
+  },
+  {
+    "kind": "table",
+    "name": "selected_LASSO_scaled",
+    "columns": [
+      "Feature",
+      "Fitted coefficient",
+      "Original-unit coefficient"
+    ],
+    "rows": [
+      [
+        "racepctblack",
+        "0.06800526058675972",
+        "0.2647313660401407"
+      ],
+      [
+        "racePctAsian",
+        "-0.0018631262955021966",
+        "-0.008921285741917336"
+      ],
+      [
+        "agePct12t21",
+        "0.012486464735134192",
+        "0.0800720485873477"
+      ],
+      [
+        "agePct12t29",
+        "-0.0433039685478546",
+        "-0.30218199053222866"
+      ],
+      [
+        "pctUrban",
+        "0.017130549590689253",
+        "0.038420098264159784"
+      ],
+      [
+        "pctWWage",
+        "-0.014238906453935964",
+        "-0.07831040757033468"
+      ],
+      [
+        "pctWFarmSelf",
+        "0.00484792054939076",
+        "0.023776517754958513"
+      ],
+      [
+        "pctWInvInc",
+        "-0.02214386576962217",
+        "-0.12229641748519116"
+      ],
+      [
+        "pctWSocSec",
+        "0.010404273694103326",
+        "0.06066432611858693"
+      ],
+      [
+        "pctWPubAsst",
+        "0.007915425740069005",
+        "0.0346647476795147"
+      ],
+      [
+        "pctWRetire",
+        "-0.017828835874729956",
+        "-0.10791722874758397"
+      ],
+      [
+        "whitePerCap",
+        "-0.009642946406666986",
+        "-0.050386681114506865"
+      ],
+      [
+        "blackPerCap",
+        "-0.0039053053054899666",
+        "-0.022327151808774322"
+      ],
+      [
+        "indianPerCap",
+        "-0.005255029909374591",
+        "-0.03171234963873137"
+      ],
+      [
+        "AsianPerCap",
+        "0.005441706157747255",
+        "0.02714814048361472"
+      ],
+      [
+        "OtherPerCap",
+        "0.004071871819487721",
+        "0.02146914806112826"
+      ],
+      [
+        "HispPerCap",
+        "0.004351511055974506",
+        "0.023232946619982497"
+      ],
+      [
+        "PctPopUnderPov",
+        "-0.0293757108791255",
+        "-0.1265059079564489"
+      ],
+      [
+        "PctLess9thGrade",
+        "-0.0034911158138403986",
+        "-0.01603016328770416"
+      ],
+      [
+        "PctEmploy",
+        "0.02512175438925524",
+        "0.14429390431413103"
+      ],
+      [
+        "PctEmplManu",
+        "-0.0017555192826920387",
+        "-0.008526383417009743"
+      ],
+      [
+        "PctOccupManu",
+        "0.0007959559777587893",
+        "0.0038928493509300228"
+      ],
+      [
+        "MalePctDivorce",
+        "0.021306971496810982",
+        "0.11536378319645291"
+      ],
+      [
+        "MalePctNevMarr",
+        "0.024740047607349682",
+        "0.1405869831127171"
+      ],
+      [
+        "FemalePctDiv",
+        "-0.014646781178563053",
+        "-0.08325712326311742"
+      ],
+      [
+        "PctKids2Par",
+        "-0.04069046495668408",
+        "-0.19619422164468017"
+      ],
+      [
+        "PctYoungKids2Par",
+        "-0.0077605018537252445",
+        "-0.03517227862174348"
+      ],
+      [
+        "PctTeen2Par",
+        "-0.0019609263170508023",
+        "-0.010259617933250462"
+      ],
+      [
+        "PctWorkMom",
+        "-0.022405712376783633",
+        "-0.12728333929538127"
+      ],
+      [
+        "NumIlleg",
+        "-0.010261768246282152",
+        "-0.09019932607759916"
+      ],
+      [
+        "PctIlleg",
+        "0.02393657012257792",
+        "0.10401804309044477"
+      ],
+      [
+        "NumImmig",
+        "-0.011299376775762439",
+        "-0.12623396445580318"
+      ],
+      [
+        "PctImmigRecent",
+        "-1.5293861289776235e-05",
+        "-6.908724167454418e-05"
+      ],
+      [
+        "PctImmigRec10",
+        "-0.0006602712533370652",
+        "-0.003356086540948377"
+      ],
+      [
+        "PctRecImmig10",
+        "0.008689026086587833",
+        "0.036917555452930066"
+      ],
+      [
+        "PctNotSpeakEnglWell",
+        "-0.013186163478805756",
+        "-0.05962364610439788"
+      ],
+      [
+        "PctLargHouseOccup",
+        "-0.012075494496912266",
+        "-0.06274271749993769"
+      ],
+      [
+        "PersPerOccupHous",
+        "0.009262833651180217",
+        "0.0548653485605235"
+      ],
+      [
+        "PersPerOwnOccHous",
+        "-0.0003779714501046195",
+        "-0.0024022210336340642"
+      ],
+      [
+        "PctPersOwnOccup",
+        "-0.011469863695022018",
+        "-0.05852289958177736"
+      ],
+      [
+        "PctPersDenseHous",
+        "0.04335817952501731",
+        "0.20429135571533083"
+      ],
+      [
+        "PctHousLess3BR",
+        "0.011283996304434685",
+        "0.06598378494440676"
+      ],
+      [
+        "MedNumBR",
+        "0.0007359495727621743",
+        "0.002889299218489387"
+      ],
+      [
+        "HousVacant",
+        "0.017531111610604402",
+        "0.11649508216872251"
+      ],
+      [
+        "PctHousOccup",
+        "-0.011883612486443663",
+        "-0.06147684366467151"
+      ],
+      [
+        "PctVacantBoarded",
+        "0.015071737863870413",
+        "0.07029946331419888"
+      ],
+      [
+        "PctVacMore6Mos",
+        "-0.011004463498282227",
+        "-0.0583928448202669"
+      ],
+      [
+        "MedYrHousBuilt",
+        "-0.0031157186779640616",
+        "-0.013530230091119665"
+      ],
+      [
+        "PctHousNoPhone",
+        "0.003597671995000682",
+        "0.014690479000781268"
+      ],
+      [
+        "PctWOFullPlumb",
+        "-0.005134360969998935",
+        "-0.024605472666285565"
+      ],
+      [
+        "OwnOccLowQuart",
+        "-0.001175174441764008",
+        "-0.005178448578419114"
+      ],
+      [
+        "RentLowQ",
+        "-0.030877786010044348",
+        "-0.1396531047990488"
+      ],
+      [
+        "MedRent",
+        "0.03054193501588475",
+        "0.14146236578038096"
+      ],
+      [
+        "MedRentPctHousInc",
+        "0.015276299921382219",
+        "0.09093922450164896"
+      ],
+      [
+        "MedOwnCostPctInc",
+        "-0.003631824149263355",
+        "-0.0195038888097954"
+      ],
+      [
+        "MedOwnCostPctIncNoMtg",
+        "-0.014629504630683184",
+        "-0.07674312478024281"
+      ],
+      [
+        "NumInShelters",
+        "0.00850312865319141",
+        "0.08279485310482511"
+      ],
+      [
+        "NumStreet",
+        "0.0174653371313303",
+        "0.17707498370962377"
+      ],
+      [
+        "PctForeignBorn",
+        "0.00816732852283541",
+        "0.0351156983239076"
+      ],
+      [
+        "PctSameCity85",
+        "0.003504708770593138",
+        "0.0174699126175965"
+      ],
+      [
+        "LemasSwFTFieldPerPop",
+        "0.007138906864544177",
+        "0.11578018993413698"
+      ],
+      [
+        "LemasTotalReq",
+        "-0.005465357684997327",
+        "-0.07575740548071848"
+      ],
+      [
+        "PolicReqPerOffic",
+        "0.00965534797389282",
+        "0.12146982770197097"
+      ],
+      [
+        "RacialMatchCommPol",
+        "-0.0031704621066411145",
+        "-0.03386310683415055"
+      ],
+      [
+        "PctPolicBlack",
+        "-0.0032840994870449083",
+        "-0.030956612358537684"
+      ],
+      [
+        "PctPolicHisp",
+        "0.00305381603924604",
+        "0.03537385948769186"
+      ],
+      [
+        "PctPolicAsian",
+        "0.0020855825469349",
+        "0.023222743242009514"
+      ],
+      [
+        "OfficAssgnDrugUnits",
+        "-0.0026752791830707006",
+        "-0.04960338508136773"
+      ],
+      [
+        "NumKindsDrugsSeiz",
+        "-0.003473650286387585",
+        "-0.04344745193604366"
+      ],
+      [
+        "PolicAveOTWorked",
+        "-0.001938534455794448",
+        "-0.020095254207509492"
+      ],
+      [
+        "LandArea",
+        "0.005227174935556744",
+        "0.049571624609752576"
+      ],
+      [
+        "PopDens",
+        "0.0035412728267946985",
+        "0.01752957471358782"
+      ],
+      [
+        "PctUsePubTrans",
+        "-0.009776920811073824",
+        "-0.042375404725148086"
+      ],
+      [
+        "PolicCars",
+        "0.007770324212772531",
+        "0.08215169096758534"
+      ],
+      [
+        "LemasPctPolicOnPatr",
+        "0.0017657264707941092",
+        "0.0209518700685705"
+      ],
+      [
+        "LemasGangUnitDeploy",
+        "0.006293640329679752",
+        "0.03816195483562455"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_scaled selects 76 variables:** racepctblack, racePctAsian, agePct12t21, agePct12t29, pctUrban, pctWWage, pctWFarmSelf, pctWInvInc, pctWSocSec, pctWPubAsst, pctWRetire, whitePerCap, blackPerCap, indianPerCap, AsianPerCap, OtherPerCap, HispPerCap, PctPopUnderPov, PctLess9thGrade, PctEmploy, PctEmplManu, PctOccupManu, MalePctDivorce, MalePctNevMarr, FemalePctDiv, PctKids2Par, PctYoungKids2Par, PctTeen2Par, PctWorkMom, NumIlleg, PctIlleg, NumImmig, PctImmigRecent, PctImmigRec10, PctRecImmig10, PctNotSpeakEnglWell, PctLargHouseOccup, PersPerOccupHous, PersPerOwnOccHous, PctPersOwnOccup, PctPersDenseHous, PctHousLess3BR, MedNumBR, HousVacant, PctHousOccup, PctVacantBoarded, PctVacMore6Mos, MedYrHousBuilt, PctHousNoPhone, PctWOFullPlumb, OwnOccLowQuart, RentLowQ, MedRent, MedRentPctHousInc, MedOwnCostPctInc, MedOwnCostPctIncNoMtg, NumInShelters, NumStreet, PctForeignBorn, PctSameCity85, LemasSwFTFieldPerPop, LemasTotalReq, PolicReqPerOffic, RacialMatchCommPol, PctPolicBlack, PctPolicHisp, PctPolicAsian, OfficAssgnDrugUnits, NumKindsDrugsSeiz, PolicAveOTWorked, LandArea, PopDens, PctUsePubTrans, PolicCars, LemasPctPolicOnPatr, LemasGangUnitDeploy. Final solver iterations: 546; dual gap: 4.74e-09."
+  },
+  {
+    "kind": "text",
+    "text": "Standardization changes the effective L1 penalty in original units: a unit change in a low-variance feature is treated differently after scaling. Hence the fitted supports and optimal penalties can differ. Correlated predictors may substitute for each other, so an excluded variable is not necessarily irrelevant. The test-error comparison follows in the frozen evaluation table."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(i) Principal component regression (PCR)\nThe Pipeline is median imputation -> standardization -> full-SVD PCA -> ordinary least squares. M is selected by the same five training folds and validation MSE. All integer values 1 through 122 are searched, so neither endpoint is an artificial truncated search boundary. PCA directions, imputation medians and scaling statistics are refitted within each fold. PCA maximizes predictor variance, not association with the response; a high explained-variance fraction alone does not determine the best M."
+  },
+  {
+    "kind": "text",
+    "text": "**PCR:** pca__n_components = **93**; five-fold CV MSE = **0.01944865**; final grid [1, 122], 122 candidates. Convergence warnings: **0**. The selected value is interior to the final search range."
+  },
+  {
+    "kind": "text",
+    "text": "The selected 93 components explain **99.7959%** of standardized training predictor variance."
+  },
+  {
+    "kind": "text",
+    "text": "## 2(j) L1-penalized boosting with XGBoost\nImplementation assumption: interpret the allowed XGBoost option as **booster=\"gbtree\"** with a CV-selected **reg_alpha**, an L1 penalty on scalar leaf weights. Standard tree leaves predict constants; they do not fit LASSO regressions at nodes. This differs from a literal tree with local multivariate L1 regressions. The standard gbtree implementation fulfills the explicit XGBoost option under this stated interpretation; no unsupported local-linear-tree claim is made. gblinear would fit a linear booster and would not be a boosting tree.\n\nFor a fixed tree structure, the regularizer includes reg_alpha*sum(|w_j|) + (reg_lambda/2)*sum(w_j^2). The L1 term can shrink leaf weights to zero and affects split gains. It is not direct coefficient selection over the original 122 features. See the official [XGBoost parameter documentation](https://xgboost.readthedocs.io/en/stable/parameter.html) and [boosted-tree introduction](https://xgboost.readthedocs.io/en/stable/tutorials/model.html).\n\nThe fixed, predeclared configuration uses squared-error loss, 400 trees, learning_rate=0.04, max_depth=3, min_child_weight=5, reg_lambda=1, subsample=1, colsample_bytree=1, gamma=0, hist trees, n_jobs=1 and seed 552. Only reg_alpha is tuned: zero plus 29 positive log-spaced candidates from 1e-5 through 1e2, expanding if necessary. Median imputation remains inside the Pipeline for consistent data handling. No test-set early stopping is used; other tree settings are fixed modeling assumptions, not claimed globally optimal."
+  },
+  {
+    "kind": "text",
+    "text": "**XGBoost:** model__reg_alpha = **0.00017782794100389227**; five-fold CV MSE = **0.01970332**; final grid [0.0, 100.0], 30 candidates. Convergence warnings: **0**. The selected value is interior to the final search range."
+  },
+  {
+    "kind": "table",
+    "name": "tuning_summary",
+    "columns": [
+      "Model",
+      "Parameter",
+      "Selected",
+      "CV MSE",
+      "Grid min",
+      "Grid max",
+      "Candidates",
+      "Convergence warnings"
+    ],
+    "rows": [
+      [
+        "Ridge",
+        "model__alpha",
+        "56.23413251903491",
+        "0.01914445603383055",
+        "1e-06",
+        "1000000.0",
+        "49",
+        "0"
+      ],
+      [
+        "LASSO_unscaled",
+        "model__alpha",
+        "0.0001",
+        "0.018990935905136848",
+        "1e-05",
+        "0.1",
+        "41",
+        "0"
+      ],
+      [
+        "LASSO_scaled",
+        "model__alpha",
+        "0.000630957344480193",
+        "0.019102574827801186",
+        "1e-05",
+        "0.1",
+        "41",
+        "0"
+      ],
+      [
+        "PCR",
+        "pca__n_components",
+        "93.0",
+        "0.01944865310695159",
+        "1.0",
+        "122.0",
+        "122",
+        "0"
+      ],
+      [
+        "XGBoost",
+        "model__reg_alpha",
+        "0.00017782794100389227",
+        "0.019703318193972065",
+        "0.0",
+        "100.0",
+        "30",
+        "0"
+      ]
+    ]
+  },
+  {
+    "kind": "table",
+    "name": "model_comparison",
+    "columns": [
+      "Model",
+      "Selected parameter",
+      "CV MSE",
+      "Test MSE",
+      "Test RMSE",
+      "Test R2",
+      "Selected variables"
+    ],
+    "rows": [
+      [
+        "OLS",
+        "{\"method\": \"least squares\"}",
+        "nan",
+        "0.017966215426067335",
+        "0.13403811184162262",
+        "0.6222037247894232",
+        "N/A"
+      ],
+      [
+        "Ridge",
+        "{\"model__alpha\": 56.23413251903491}",
+        "0.01914445603383055",
+        "0.017475223924256735",
+        "0.13219388762063372",
+        "0.6325283678010479",
+        "N/A"
+      ],
+      [
+        "LASSO_unscaled",
+        "{\"model__alpha\": 0.0001}",
+        "0.018990935905136848",
+        "0.017657787943820193",
+        "0.13288260963655174",
+        "0.6286893841897041",
+        "75"
+      ],
+      [
+        "LASSO_scaled",
+        "{\"model__alpha\": 0.000630957344480193}",
+        "0.019102574827801186",
+        "0.017721763266930823",
+        "0.13312311319575884",
+        "0.6273441014908492",
+        "76"
+      ],
+      [
+        "PCR",
+        "{\"pca__n_components\": 93}",
+        "0.01944865310695159",
+        "0.01826424604513009",
+        "0.13514527755393485",
+        "0.6159366921890433",
+        "N/A"
+      ],
+      [
+        "XGBoost",
+        "{\"model__reg_alpha\": 0.00017782794100389227}",
+        "0.019703318193972065",
+        "0.016214073448030726",
+        "0.12733449433688707",
+        "0.659048029349074",
+        "N/A"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "**OLS: test MSE = 0.01796622; RMSE = 0.13403811; R-squared = 0.622204.**"
+  },
+  {
+    "kind": "text",
+    "text": "**Ridge: test MSE = 0.01747522; RMSE = 0.13219389; R-squared = 0.632528.**"
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_unscaled: test MSE = 0.01765779; RMSE = 0.13288261; R-squared = 0.628689.**"
+  },
+  {
+    "kind": "text",
+    "text": "**LASSO_scaled: test MSE = 0.01772176; RMSE = 0.13312311; R-squared = 0.627344.**"
+  },
+  {
+    "kind": "text",
+    "text": "**PCR: test MSE = 0.01826425; RMSE = 0.13514528; R-squared = 0.615937.**"
+  },
+  {
+    "kind": "text",
+    "text": "**XGBoost: test MSE = 0.01621407; RMSE = 0.12733449; R-squared = 0.659048.**"
+  },
+  {
+    "kind": "text",
+    "text": "Standardized LASSO selected **76** variables versus **75** without standardization. Its test MSE is **0.00006398 higher**. This is a final held-out comparison, not a reason to retune. Lowest observed test MSE among the prespecified fits: **XGBoost**. This descriptive ranking on one fixed split does not establish a statistically reliable winner or estimate the performance of a newly selected model."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/model_test_mse.png",
+    "caption": "One final test evaluation for each frozen model. No test-based tuning."
+  },
+  {
+    "kind": "figure",
+    "path": "figures/cv_curves.png",
+    "caption": "Training-only hyperparameter selection curves. Dashed lines mark selected settings."
+  },
+  {
+    "kind": "text",
+    "text": "## Reproducibility, validation and limitations\nThe notebook must run from the project root. All input and output paths are relative. Pinned dependencies, raw data hashes, fold assignments, full search results, LASSO coefficient tables, rules and test predictions are included. Every code cell is executed in order by a fresh Jupyter kernel using scripts/run_notebook.py. scripts/make_report.py creates the English PDF from the same recorded narrative, tables and figures, so the report is tied to computed outputs.\n\nThe original nonrandom external split may have distribution shifts; shuffled internal CV assumes exchangeability within the training portion. It does not account for possible geographic or social dependence. Median filling of heavily missing police variables is an information limitation, not a claim that missingness is ignorable. The 11 highest-CV features are not a formal inferential screen. Model rankings are specific to this split and stated configurations. Hyperparameter searches resolve grid endpoints, but do not guarantee a continuous global optimum.\n\nNo additional course submission naming, upload, repository, or packaging rules appear in the supplied homework PDF. Only the supplied instructions are asserted here."
+  },
+  {
+    "kind": "table",
+    "name": "completion_checklist",
+    "columns": [
+      "Item",
+      "Verified requirement",
+      "Status"
+    ],
+    "rows": [
+      [
+        "1(a)",
+        "120 rows, six features, two diagnoses; local data parsed",
+        "Complete"
+      ],
+      [
+        "1(b)",
+        "Full-data fitted tree, complete plot and label mapping",
+        "Complete"
+      ],
+      [
+        "1(c)",
+        "Every full-tree root-to-leaf rule; exact prediction agreement",
+        "Complete"
+      ],
+      [
+        "1(d)",
+        "Cost-complexity CV, complexity/performance comparison, selected tree and all rules",
+        "Complete"
+      ],
+      [
+        "2(a)",
+        "1994 x 128; original first 1495/last 499 split",
+        "Complete"
+      ],
+      [
+        "2(b)",
+        "Five identifiers removed; fold-local median imputation; 122 predictors retained",
+        "Complete"
+      ],
+      [
+        "2(c)",
+        "Full predictor correlation matrix plus readable panels",
+        "Complete"
+      ],
+      [
+        "2(d)",
+        "All predictor CVs; ddof=1; training-only scope and edge cases",
+        "Complete"
+      ],
+      [
+        "2(e)",
+        "Exactly 11 features; scatter and box plots; significance answer",
+        "Complete"
+      ],
+      [
+        "2(f)",
+        "OLS fitted; test MSE, RMSE, R2",
+        "Complete"
+      ],
+      [
+        "2(g)",
+        "Ridge CV alpha; test metrics",
+        "Complete"
+      ],
+      [
+        "2(h)",
+        "Both LASSOs; CV alpha, support names/counts, convergence, comparison",
+        "Complete"
+      ],
+      [
+        "2(i)",
+        "PCA plus OLS; all M searched by fold-local CV; test metrics",
+        "Complete"
+      ],
+      [
+        "2(j)",
+        "gbtree/reg_alpha CV; explicit interpretation; test metrics",
+        "Complete"
+      ]
+    ]
+  },
+  {
+    "kind": "text",
+    "text": "**Outstanding assignment items: none.** A literal local-LASSO model tree is not claimed; the documented standard-XGBoost interpretation of 2(j) is used. Unprovided course submission rules cannot be verified. Final PDF layout and fresh-kernel execution are additionally checked by the packaging workflow."
+  },
+  {
+    "kind": "text",
+    "text": "## References\n- Supplied Homework5.pdf, Questions 1-2 and footnotes 1-5.\n- Supplied diagnosis.names and diagnosis.data. J. Czerniak and H. Zarzycki, Application of rough sets in the presumptive diagnosis of urinary system diseases, ACS 2002, 2003, pp. 41-51.\n- Supplied communities.names and communities.data, UCI Machine Learning Repository; source data: US Census 1990, LEMAS 1990, FBI Crime in the United States 1995. M. A. Redmond and A. Baveja, A Data-Driven Software Tool for Enabling Cooperative Information Sharing Among Police Departments, European Journal of Operational Research 141 (2002), 660-678.\n- Matthew Mayo, Simplifying Decision Tree Interpretability with Python & Scikit-learn, KDnuggets (2017), supplied PDF. The path traversal here is a fresh implementation with label decoding and prediction assertions.\n- [Scikit-learn Ridge documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html) and [Lasso documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html), for objective conventions.\n- [XGBoost parameters](https://xgboost.readthedocs.io/en/stable/parameter.html) and [boosted-tree introduction](https://xgboost.readthedocs.io/en/stable/tutorials/model.html), for booster and leaf-weight regularization semantics."
+  }
+]

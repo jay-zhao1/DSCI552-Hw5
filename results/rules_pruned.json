@@ -1,0 +1,129 @@
+[
+  {
+    "text": "IF Lumbar pain = no AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = no (n=10).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        true
+      ],
+      [
+        3,
+        0.5,
+        true
+      ]
+    ],
+    "class": 0,
+    "leaf": 2
+  },
+  {
+    "text": "IF Lumbar pain = no AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = no (n=40).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        true
+      ],
+      [
+        3,
+        0.5,
+        false
+      ]
+    ],
+    "class": 2,
+    "leaf": 3
+  },
+  {
+    "text": "IF Lumbar pain = yes AND Temperature (C) <= 37.950001 THEN bladder inflammation = no; renal pelvis nephritis = no (n=20).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        false
+      ],
+      [
+        0,
+        37.95000076293945,
+        true
+      ]
+    ],
+    "class": 0,
+    "leaf": 5
+  },
+  {
+    "text": "IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=21).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        false
+      ],
+      [
+        0,
+        37.95000076293945,
+        false
+      ],
+      [
+        4,
+        0.5,
+        true
+      ]
+    ],
+    "class": 1,
+    "leaf": 7
+  },
+  {
+    "text": "IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = no THEN bladder inflammation = no; renal pelvis nephritis = yes (n=10).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        false
+      ],
+      [
+        0,
+        37.95000076293945,
+        false
+      ],
+      [
+        4,
+        0.5,
+        false
+      ],
+      [
+        3,
+        0.5,
+        true
+      ]
+    ],
+    "class": 1,
+    "leaf": 9
+  },
+  {
+    "text": "IF Lumbar pain = yes AND Temperature (C) > 37.950001 AND Micturition pains = yes AND Urine pushing = yes THEN bladder inflammation = yes; renal pelvis nephritis = yes (n=19).",
+    "conditions": [
+      [
+        2,
+        0.5,
+        false
+      ],
+      [
+        0,
+        37.95000076293945,
+        false
+      ],
+      [
+        4,
+        0.5,
+        false
+      ],
+      [
+        3,
+        0.5,
+        false
+      ]
+    ],
+    "class": 3,
+    "leaf": 10
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "notebook_code_cells": 35,
+  "sequential_execution": true,
+  "notebook_errors": 0,
+  "models": 6,
+  "metric_recomputations_passed": true,
+  "data_hashes_passed": true,
+  "original_zip_files_checked": 4,
+  "all_question_headings_in_pdf": true,
+  "pdf_pages": 39,
+  "pdf_text_bounds_passed": true,
+  "no_replacement_or_black_square_glyphs": true,
+  "lasso_support_checks_passed": true,
+  "search_boundaries_and_warning_checks_passed": true
+}

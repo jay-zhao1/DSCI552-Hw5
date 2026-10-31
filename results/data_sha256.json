@@ -1,0 +1,18 @@
+[
+  {
+    "file": "Homework 5 Data/communities.data",
+    "sha256": "09e0b5c07eae24c1efab19b2edee05e160e7f5743b6f31e31eec3d73624da2ea"
+  },
+  {
+    "file": "Homework 5 Data/communities.names",
+    "sha256": "80914f24ab37261fb0fbda7e417cad8001335dadda4a8d702c265601ef8434fc"
+  },
+  {
+    "file": "Homework 5 Data/diagnosis.data",
+    "sha256": "5d0b61049992b8327aa847f916f3389ec08f74b43dbb3fc5222ac07185d7c88f"
+  },
+  {
+    "file": "Homework 5 Data/diagnosis.names",
+    "sha256": "a22d671f93ebc63235896ee55cd442ffed05c0c4b65933df813ed88823a8d2e0"
+  }
+]

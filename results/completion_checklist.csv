@@ -1,0 +1,15 @@
+Item,Verified requirement,Status
+1(a),"120 rows, six features, two diagnoses; local data parsed",Complete
+1(b),"Full-data fitted tree, complete plot and label mapping",Complete
+1(c),Every full-tree root-to-leaf rule; exact prediction agreement,Complete
+1(d),"Cost-complexity CV, complexity/performance comparison, selected tree and all rules",Complete
+2(a),1994 x 128; original first 1495/last 499 split,Complete
+2(b),Five identifiers removed; fold-local median imputation; 122 predictors retained,Complete
+2(c),Full predictor correlation matrix plus readable panels,Complete
+2(d),All predictor CVs; ddof=1; training-only scope and edge cases,Complete
+2(e),Exactly 11 features; scatter and box plots; significance answer,Complete
+2(f),"OLS fitted; test MSE, RMSE, R2",Complete
+2(g),Ridge CV alpha; test metrics,Complete
+2(h),"Both LASSOs; CV alpha, support names/counts, convergence, comparison",Complete
+2(i),PCA plus OLS; all M searched by fold-local CV; test metrics,Complete
+2(j),gbtree/reg_alpha CV; explicit interpretation; test metrics,Complete

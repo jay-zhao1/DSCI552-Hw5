@@ -1,0 +1,10 @@
+[
+  {
+    "attempt": 1,
+    "min": 1e-05,
+    "max": 0.1,
+    "count": 41,
+    "best": 0.0001,
+    "warnings": []
+  }
+]

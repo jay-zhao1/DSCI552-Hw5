@@ -1,0 +1,30 @@
+{
+  "all_assignment_items_complete": true,
+  "rows_acute": 120,
+  "features_acute": 6,
+  "labels_acute": 2,
+  "communities_shape": [
+    1994,
+    128
+  ],
+  "train_rows": 1495,
+  "test_rows": 499,
+  "predictors": 122,
+  "top_cv_features": [
+    "PctPolicAsian",
+    "NumStreet",
+    "NumInShelters",
+    "NumIlleg",
+    "NumImmig",
+    "LemasPctOfficDrugUn",
+    "NumUnderPov",
+    "LemasSwornFT",
+    "population",
+    "numbUrban",
+    "HousVacant"
+  ],
+  "rule_agreement_checked": true,
+  "test_evaluations_per_model": 1,
+  "convergence_warnings": 0,
+  "seed": 552
+}

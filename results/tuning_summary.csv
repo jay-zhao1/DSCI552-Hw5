@@ -1,0 +1,6 @@
+Model,Parameter,Selected,CV MSE,Grid min,Grid max,Candidates,Convergence warnings
+Ridge,model__alpha,56.23413251903491,0.01914445603383055,1e-06,1000000.0,49,0
+LASSO_unscaled,model__alpha,0.0001,0.018990935905136848,1e-05,0.1,41,0
+LASSO_scaled,model__alpha,0.000630957344480193,0.019102574827801186,1e-05,0.1,41,0
+PCR,pca__n_components,93.0,0.01944865310695159,1.0,122.0,122,0
+XGBoost,model__reg_alpha,0.00017782794100389227,0.019703318193972065,0.0,100.0,30,0
