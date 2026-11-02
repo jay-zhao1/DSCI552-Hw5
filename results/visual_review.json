@@ -1,8 +1,8 @@
 {
-  "pdf_sha256": "a5f1ecad116110a36f416f529b6b1a24a92126872e33cef807055b39db7cbdb6",
-  "pages_reviewed": 41,
-  "method": "All pages rendered. Updated 1(d) comparison, candidate tree and all candidate rules visually inspected on pages 9-11. Remaining Question 2 PDF page text verified identical to the previous report after excluding page numbers; original Question 2 figure files are byte-identical.",
+  "pdf_sha256": "7c9dd72c04d170dc5f33b06c16fe546501d63f31e11f4cc59a659e81f7a02aeb",
+  "pages_reviewed": 13,
+  "method": "All pages reviewed in rendered contact sheets. Full-page inspections of saved-rule tree diagrams, combined boxplots, complete LASSO grids and model results. Temperature branch labels separated at readable type; all page text bounds and variable/rule completeness checked.",
   "clipped_text_or_figures_found": false,
   "replacement_glyphs_found": false,
-  "note": "Oversized figure pages preserve readable labels. Complete vector figure PDFs and numeric correlation data are also included."
+  "note": "Standard letter report within the inclusive 20-page limit. Original full-resolution diagrams, enlarged correlation panels and detailed tables remain unchanged in Notebook/results/figures."
 }

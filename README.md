@@ -5,7 +5,7 @@ All submission content is in English. The original supplied data are used.
 ## Main deliverables
 
 - `DSCI552_Homework5.ipynb`: complete executed notebook, including analyses and figures.
-- `DSCI552_Homework5_Report.pdf`: complete English report derived from the notebook's actual recorded outputs. Correlation plots and other large figures use larger PDF pages to keep their labels readable; zoom or use "fit to page" when printing.
+- `DSCI552_Homework5_Report.pdf`: complete English report derived from the notebook's actual recorded outputs, formatted on standard letter pages within the inclusive 20-page limit. All question answers, complete LASSO variable names and pruning rules remain in the report. Detailed correlation panels, coefficient tables and long diagnostics remain in the Notebook, results/ and figures/; the report gives their locations. The correlation overview uses the index key in results/correlation_feature_index.csv.
 - `Homework 5 Data/`: supplied original raw data, metadata, and decision-tree article.
 - `Homework5.pdf`: supplied assignment, retained for reference.
 - `requirements.txt`: exact installed Python package versions.

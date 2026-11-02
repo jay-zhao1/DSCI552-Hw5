@@ -7,10 +7,13 @@
   "data_hashes_passed": true,
   "original_zip_files_checked": 4,
   "all_question_headings_in_pdf": true,
-  "pdf_pages": 41,
+  "pdf_pages": 13,
   "pdf_text_bounds_passed": true,
   "no_replacement_or_black_square_glyphs": true,
   "lasso_support_checks_passed": true,
   "search_boundaries_and_warning_checks_passed": true,
-  "question_1d_reduced_candidate_rule_and_metric_checks_passed": true
+  "question_1d_reduced_candidate_rule_and_metric_checks_passed": true,
+  "inclusive_20_page_limit_passed": true,
+  "standard_letter_page_size": true,
+  "complete_lasso_names_and_pruning_rules_in_report": true
 }

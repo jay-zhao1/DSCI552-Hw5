@@ -107,11 +107,30 @@ assert sorted(all_validation)==list(range(1495))
 pdf=root/'DSCI552_Homework5_Report.pdf'
 reader=PdfReader(pdf)
 text='\n'.join(p.extract_text() for p in reader.pages)
+assert len(reader.pages)<=20, 'The inclusive report length limit is 20 pages.'
+assert all(np.isclose(float(p.mediabox.width),612) and np.isclose(float(p.mediabox.height),792) for p in reader.pages)
 for q in [f'1({x})' for x in 'abcd']+[f'2({x})' for x in 'abcdefghij']:
  assert q in text,q
 for row in metrics.to_dict('records'):
  assert f'{row["Test MSE"]:.8f}' in text
 assert 'I used AI tools to help me learn the relevant programming techniques' in re.sub(r'\s+',' ',text)
+# Complete variable names and both complete rule sets survive report compaction.
+compact_text=re.sub(r'\s+','',text)
+for name in ['LASSO_unscaled','LASSO_scaled']:
+ for feature in pd.read_csv(root/'results'/f'selected_{name}.csv').Feature:
+  assert feature in compact_text, f'Missing LASSO variable: {feature}'
+for model in ['LASSO_unscaled','LASSO_scaled']:
+ selected_names=pd.read_csv(root/'results'/f'selected_{model}.csv').Feature.tolist()
+ start=compact_text.index(f'{model}:all{len(selected_names)}selectedvariables')
+ end=compact_text.index('Allcoefficients,includingoriginal-unitequivalents',start)
+ list_text=compact_text[start:end]
+ assert all(feature in list_text for feature in selected_names), 'Incomplete per-model LASSO list'
+for name in ['rules_full','rules_reduced_candidate']:
+ for rule in json.loads((root/'results'/f'{name}.json').read_text()):
+  assert re.sub(r'\s+','',rule['text']) in compact_text, 'Missing complete IF-THEN rule'
+assert 'results/correlation_feature_index.csv' in compact_text
+assert 'results/coefficient_of_variation.csv' in compact_text
+
 assert '\ufffd' not in text and '\u25a0' not in text
 bounds=[]
 with pdfplumber.open(pdf) as p:
@@ -121,6 +140,6 @@ with pdfplumber.open(pdf) as p:
   assert not bad, f'Out-of-page text on page {i}'
   bounds.append({'page':i,'width_points':float(page.width),'height_points':float(page.height),'chars':len(page.chars)})
 (root/'results/pdf_page_audit.json').write_text(json.dumps(bounds,indent=2))
-result={'notebook_code_cells':len(code),'sequential_execution':True,'notebook_errors':0,'models':len(metrics),'metric_recomputations_passed':True,'data_hashes_passed':True,'original_zip_files_checked':archive_checks,'all_question_headings_in_pdf':True,'pdf_pages':len(reader.pages),'pdf_text_bounds_passed':True,'no_replacement_or_black_square_glyphs':True,'lasso_support_checks_passed':True,'search_boundaries_and_warning_checks_passed':True,'question_1d_reduced_candidate_rule_and_metric_checks_passed':True}
+result={'notebook_code_cells':len(code),'sequential_execution':True,'notebook_errors':0,'models':len(metrics),'metric_recomputations_passed':True,'data_hashes_passed':True,'original_zip_files_checked':archive_checks,'all_question_headings_in_pdf':True,'pdf_pages':len(reader.pages),'pdf_text_bounds_passed':True,'no_replacement_or_black_square_glyphs':True,'lasso_support_checks_passed':True,'search_boundaries_and_warning_checks_passed':True,'question_1d_reduced_candidate_rule_and_metric_checks_passed':True,'inclusive_20_page_limit_passed':True,'standard_letter_page_size':True,'complete_lasso_names_and_pruning_rules_in_report':True}
 (root/'results/final_validation.json').write_text(json.dumps(result,indent=2))
 print(json.dumps(result,indent=2))

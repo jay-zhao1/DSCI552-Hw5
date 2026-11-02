@@ -1,0 +1,77 @@
+{
+  "scope": "Report-only reformatting and directly dependent documentation/validation/packaging",
+  "inclusive_page_limit": 20,
+  "final_pages": 13,
+  "all_pages_standard_letter": true,
+  "cover_references_and_any_appendices_included_in_page_count": true,
+  "all_14_answer_headings_present": {
+    "1(a)": 2,
+    "1(b)": 2,
+    "1(c)": 3,
+    "1(d)": 3,
+    "2(a)": 5,
+    "2(b)": 5,
+    "2(c)": 5,
+    "2(d)": 6,
+    "2(e)": 7,
+    "2(f)": 9,
+    "2(g)": 10,
+    "2(h)": 10,
+    "2(i)": 11,
+    "2(j)": 12
+  },
+  "lasso_variable_lists": {
+    "LASSO_unscaled": {
+      "count": 75,
+      "all_variable_names_in_own_list": true
+    },
+    "LASSO_scaled": {
+      "count": 76,
+      "all_variable_names_in_own_list": true
+    }
+  },
+  "complete_full_tree_and_reduced_candidate_IF_THEN_rules_retained": true,
+  "one_SE_identical_tree_and_rules_cross_reference_checked": true,
+  "all_six_models_test_MSE_RMSE_R2_verified": true,
+  "body_font_points": 10.3,
+  "table_font_points": 9.3,
+  "smallest_non_footer_PDF_text_points": 9.3,
+  "notebook_byte_identical": true,
+  "unabridged_report_data_byte_identical": true,
+  "original_experimental_result_and_figure_files_byte_identical": true,
+  "existing_files_verified_unchanged": 87,
+  "models_trained": 0,
+  "notebook_cells_executed": 0,
+  "new_figure_views": "Index-labelled full correlation overview; compact diagrams from saved rules; regrouped original training scatter/boxplot data, validated against saved training statistics.",
+  "detailed_tables_and_original_correlation_panels_retained_with_report_pointers": true,
+  "author_and_original_AI_disclosure_preserved": true,
+  "git_metadata_unchanged": true,
+  "browser_commit_push_or_remote_operations": false,
+  "updated_existing_files_before_packaging": [
+    "DSCI552_Homework5_Report.pdf",
+    "README.md",
+    "results/final_validation.json",
+    "results/pdf_page_audit.json",
+    "results/visual_review.json",
+    "scripts/make_report.py",
+    "scripts/validate_artifacts.py"
+  ],
+  "new_report_views_and_layout_records": [
+    "figures/report_correlation_overview.pdf",
+    "figures/report_correlation_overview.png",
+    "figures/report_top11_boxplots.pdf",
+    "figures/report_top11_boxplots.png",
+    "figures/report_top11_scatter_1.pdf",
+    "figures/report_top11_scatter_1.png",
+    "figures/report_top11_scatter_2.pdf",
+    "figures/report_top11_scatter_2.png",
+    "figures/report_tree_full.pdf",
+    "figures/report_tree_full.png",
+    "figures/report_tree_reduced.pdf",
+    "figures/report_tree_reduced.png",
+    "results/correlation_feature_index.csv",
+    "results/report_layout_map.json"
+  ],
+  "additional_updated_file": "results/submission_manifest.json",
+  "new_validation_record": "results/report_format_validation.json"
+}

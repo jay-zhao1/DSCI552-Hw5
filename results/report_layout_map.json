@@ -1,0 +1,72 @@
+{
+  "page_limit_including_cover_references_and_appendices": 20,
+  "actual_pages": 13,
+  "page_size_points": [
+    612,
+    792
+  ],
+  "body_font_points": 10.3,
+  "table_font_points": 9.3,
+  "rule_font_points": 9.6,
+  "all_14_subquestions_retained": true,
+  "complete_LASSO_variable_names_retained": true,
+  "one_SE_duplicate_tree_and_rules_cross_referenced_only_if_identical": true,
+  "full_and_reduced_tree_diagrams_reconstructed_from_saved_rules_without_fitting": true,
+  "correlation_index_key": "results/correlation_feature_index.csv",
+  "external_details": [
+    {
+      "source": "versions",
+      "location": "results/versions.csv",
+      "report": "Core versions on cover"
+    },
+    {
+      "source": "figures/pruning_selection.png",
+      "report": "Numeric conclusions retained; diagnostic plot external"
+    },
+    {
+      "source": "figures/correlation_panel_1.png",
+      "location": "figures/correlation_panel_1.png",
+      "report": "Detailed correlation panel retained in Notebook and figures/"
+    },
+    {
+      "source": "figures/correlation_panel_2.png",
+      "location": "figures/correlation_panel_2.png",
+      "report": "Detailed correlation panel retained in Notebook and figures/"
+    },
+    {
+      "source": "figures/correlation_panel_3.png",
+      "location": "figures/correlation_panel_3.png",
+      "report": "Detailed correlation panel retained in Notebook and figures/"
+    },
+    {
+      "source": "figures/correlation_panel_4.png",
+      "location": "figures/correlation_panel_4.png",
+      "report": "Detailed correlation panel retained in Notebook and figures/"
+    },
+    {
+      "source": "coefficient_of_variation",
+      "location": "results/coefficient_of_variation.csv",
+      "report": "Method and complete-table pointer; top 11 retained"
+    },
+    {
+      "source": "selected_LASSO_unscaled",
+      "location": "results/selected_LASSO_unscaled.csv",
+      "report": "Complete variable names retained; coefficient columns external"
+    },
+    {
+      "source": "selected_LASSO_scaled",
+      "location": "results/selected_LASSO_scaled.csv",
+      "report": "Complete variable names retained; coefficient columns external"
+    },
+    {
+      "source": "figures/model_test_mse.png",
+      "report": "Numeric conclusions retained; diagnostic plot external"
+    },
+    {
+      "source": "figures/cv_curves.png",
+      "report": "Numeric conclusions retained; diagnostic plot external"
+    }
+  ],
+  "models_trained_by_report_generator": 0,
+  "notebook_or_original_experiment_results_modified": false
+}
